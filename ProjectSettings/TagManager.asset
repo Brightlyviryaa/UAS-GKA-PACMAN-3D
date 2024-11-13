@@ -6,6 +6,9 @@ TagManager:
   tags:
   - Enemy
   - MazeGeo
+  - PacMan
+  - Pellets
+  - Wall
   layers:
   - Default
   - TransparentFX
