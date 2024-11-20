@@ -3,24 +3,22 @@ using UnityEngine.AI;
 
 public class BlueGhostController : MonoBehaviour
 {
-    public float wanderRadius = 10f;
-    public float wanderTimer = 2f;
-    public bool isPlayerControlled = false;
-    public float moveSpeed = 5f;
+    public float wanderRadius = 10f; // Wander radius for AI movement
+    public float wanderTimer = 2f; // Time interval for AI wandering
+    public bool isPlayerControlled = false; // Determines if the ghost is controlled by the player
 
-    private NavMeshAgent agent;
-    private float timer;
-    private Vector3 bufferedDirection = Vector3.zero;
-    private Vector3 currentDirection = Vector3.zero;
+    private NavMeshAgent agent; // Reference to the NavMesh Agent
+    private float timer; // Timer to track wandering
+    public CameraFollow cameraFollow; // Reference to the CameraFollow script
 
     void Start()
     {
         agent = GetComponent<NavMeshAgent>();
-        timer = wanderTimer;
+        timer = wanderTimer; // Initialize the timer
 
         if (!isPlayerControlled)
         {
-            Wander();
+            Wander(); // Start wandering immediately if AI-controlled
         }
     }
 
@@ -28,98 +26,86 @@ public class BlueGhostController : MonoBehaviour
     {
         if (isPlayerControlled)
         {
+            // Handle player control logic here
             HandlePlayerControl();
         }
         else
         {
-            HandleAIControl();
+            // Handle AI behavior
+            timer += Time.deltaTime;
+
+            if (!agent.pathPending && agent.remainingDistance < 0.5f)
+            {
+                if (timer >= wanderTimer)
+                {
+                    Wander(); // Call the Wander function
+                    timer = 0; // Reset the timer
+                }
+            }
         }
     }
 
     void HandlePlayerControl()
     {
-        // Buffer new direction on key press
-        if (Input.GetKeyDown(KeyCode.UpArrow))
-            bufferedDirection = Vector3.forward;
-        else if (Input.GetKeyDown(KeyCode.DownArrow))
-            bufferedDirection = Vector3.back;
-        else if (Input.GetKeyDown(KeyCode.LeftArrow))
-            bufferedDirection = Vector3.left;
-        else if (Input.GetKeyDown(KeyCode.RightArrow))
-            bufferedDirection = Vector3.right;
+        // Implement player control logic (e.g., keyboard input)
+        // Example: Move ghost with arrow keys
+        float moveSpeed = 5f; // Adjust as needed
+        float moveHorizontal = Input.GetAxis("Horizontal") * moveSpeed * Time.deltaTime;
+        float moveVertical = Input.GetAxis("Vertical") * moveSpeed * Time.deltaTime;
 
-        // Check if buffered direction is valid
-        if (bufferedDirection != Vector3.zero && CanMove(bufferedDirection))
-        {
-            currentDirection = bufferedDirection; // Update to the new direction
-        }
+        Vector3 moveDirection = new Vector3(moveHorizontal, 0, moveVertical);
 
-        // Continue moving in the current direction
-        if (currentDirection != Vector3.zero)
+        // Only rotate if there is movement
+        if (moveDirection != Vector3.zero)
         {
-            transform.position += currentDirection * moveSpeed * Time.deltaTime;
-            transform.rotation = Quaternion.LookRotation(currentDirection);
+            // Calculate the new rotation
+            Quaternion targetRotation = Quaternion.LookRotation(moveDirection);
+            // Smoothly rotate towards the target rotation
+            transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, Time.deltaTime * 10f);
+            
+            // Move the ghost in the desired direction
+            transform.position += moveDirection;
         }
     }
 
-bool CanMove(Vector3 direction)
-{
-    float rayLength = 1f; // Adjust for wall proximity
-    Ray ray1 = new Ray(transform.position, direction);
-    Ray ray2 = new Ray(transform.position + Vector3.up * 0.2f, direction); // Offset slightly upwards to avoid the ground
-    Ray ray3 = new Ray(transform.position + Vector3.down * 0.2f, direction); // Offset slightly downwards
-
-    // Check if any of the rays hit an obstacle
-    return !Physics.Raycast(ray1, rayLength) && 
-           !Physics.Raycast(ray2, rayLength) && 
-           !Physics.Raycast(ray3, rayLength);
-}
-
-
-    void HandleAIControl()
-    {
-        timer += Time.deltaTime;
-
-        if (!agent.pathPending && agent.remainingDistance < 0.5f)
-        {
-            if (timer >= wanderTimer)
-            {
-                Wander();
-                timer = 0;
-            }
-        }
-    }
 
     void Wander()
     {
+        // Calculate a random position within the wander radius
         Vector3 randomDirection = Random.insideUnitSphere * wanderRadius;
-        randomDirection += transform.position;
+        randomDirection += transform.position; // Offset from the current position
 
-        NavMeshHit hit;
-        NavMesh.SamplePosition(randomDirection, out hit, wanderRadius, NavMesh.AllAreas);
+        NavMeshHit hit; // This will store the result of the NavMesh hit
+        NavMesh.SamplePosition(randomDirection, out hit, wanderRadius, NavMesh.AllAreas); // Sample a position on the NavMesh
 
-        agent.SetDestination(hit.position);
+        agent.SetDestination(hit.position); // Set the agent's destination to the new position
     }
+
+    // Method to toggle control between player and AI
 
     public void ToggleControl(bool isControlled)
     {
-        isPlayerControlled = isControlled;
+        isPlayerControlled = isControlled; // Set the control state
 
         if (isPlayerControlled)
         {
-            agent.isStopped = true;
+            // Stop AI behavior if controlled by the player
+            agent.isStopped = true; // Stop the NavMesh agent
+            // Optionally, you might want to clear any existing AI destination
             agent.ResetPath();
         }
         else
         {
-            agent.isStopped = false;
-            Wander();
+            // Start AI wandering if control is toggled off
+            Wander(); // Start AI behavior
+            agent.isStopped = false; // Resume NavMesh agent movement
         }
 
+        // Set the camera target only if controlled
         CameraFollow cameraFollow = Camera.main.GetComponent<CameraFollow>();
         if (cameraFollow != null)
         {
-            cameraFollow.target = isPlayerControlled ? transform : null;
+            cameraFollow.target = isPlayerControlled ? transform : null; // Set target only if controlled
         }
     }
 }
