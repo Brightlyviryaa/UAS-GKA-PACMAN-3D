@@ -1,46 +1,74 @@
 using UnityEngine;
 using UnityEngine.AI;
+using UnityEngine.SceneManagement;
 
+[RequireComponent(typeof(SphereCollider))]
+[RequireComponent(typeof(NavMeshAgent))]
 public class PacManController : MonoBehaviour
 {
-    public float wanderRadius = 10f; // How far Pac-Man can wander
-    public float wanderTimer = 2f; // How long between each wander (lowered for quicker movements)
+    public float wanderRadius = 10f; // Radius for random movement
+    public float wanderTimer = 2f; // Time interval for wandering
+    public int lives = 3; // Pac-Man lives
+    public Transform spawnPoint; // Respawn point for Pac-Man
 
-    private NavMeshAgent agent; // Reference to the NavMesh Agent
-    private float timer; // Timer to track when to wander
+    private NavMeshAgent agent;
+    private float timer;
 
     void Start()
     {
         agent = GetComponent<NavMeshAgent>();
-        timer = wanderTimer; // Initialize the timer
-        Wander(); // Start wandering immediately
+        SphereCollider sphereCollider = GetComponent<SphereCollider>();
+
+        // Ensure SphereCollider is a trigger
+        sphereCollider.isTrigger = true;
+
+        timer = wanderTimer;
+        Wander();
     }
 
     void Update()
     {
-        // Increment timer by the time passed since the last frame
         timer += Time.deltaTime;
 
-        // Check if the agent is close enough to its destination
         if (!agent.pathPending && agent.remainingDistance < 0.5f)
         {
             if (timer >= wanderTimer)
             {
-                Wander(); // Call the Wander function
-                timer = 0; // Reset the timer
+                Wander();
+                timer = 0;
             }
         }
     }
 
     void Wander()
     {
-        // Calculate a random position within a certain radius
         Vector3 randomDirection = Random.insideUnitSphere * wanderRadius;
-        randomDirection += transform.position; // Offset from the current position
+        randomDirection += transform.position;
 
-        NavMeshHit hit; // This will store the result of the NavMesh hit
-        NavMesh.SamplePosition(randomDirection, out hit, wanderRadius, NavMesh.AllAreas); // Sample a position on the NavMesh
+        NavMeshHit hit;
+        NavMesh.SamplePosition(randomDirection, out hit, wanderRadius, NavMesh.AllAreas);
 
-        agent.SetDestination(hit.position); // Set the agent's destination to the new position
+        agent.SetDestination(hit.position);
+    }
+
+    // Public method to handle losing a life
+    public void LoseLife()
+    {
+        lives--; // Reduce lives
+
+        if (lives > 0)
+        {
+            Debug.Log($"PacMan lost a life! Lives remaining: {lives}");
+            // Respawn Pac-Man at the spawn point
+            transform.position = spawnPoint.position;
+            agent.ResetPath();
+            Wander();
+        }
+        else
+        {
+            Debug.Log("PacMan has no lives left. Game Over!");
+            // Load the GameOver scene
+            SceneManager.LoadScene("GameOver"); // Replace "GameOver" with your actual scene name
+        }
     }
 }

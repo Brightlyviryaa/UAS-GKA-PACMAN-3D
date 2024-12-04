@@ -2,6 +2,9 @@ using UnityEngine;
 using UnityEngine.AI;
 
 // Base class for ghost behavior
+[RequireComponent(typeof(CapsuleCollider))]
+[RequireComponent(typeof(NavMeshAgent))]
+[RequireComponent(typeof(Rigidbody))]
 public class GhostControllerBase : MonoBehaviour
 {
     public float wanderRadius = 10f; // Wander radius for AI movement
@@ -13,12 +16,17 @@ public class GhostControllerBase : MonoBehaviour
 
     void Start()
     {
+        // Add this to ensure CapsuleCollider is a trigger
+        CapsuleCollider capsuleCollider = GetComponent<CapsuleCollider>();
+        capsuleCollider.isTrigger = false;
+
+        // Rest of the Start logic
         agent = GetComponent<NavMeshAgent>();
-        timer = wanderTimer; // Initialize the timer
+        timer = wanderTimer;
 
         if (!isPlayerControlled)
         {
-            Wander(); // Start wandering immediately if AI-controlled
+            Wander();
         }
     }
 
@@ -99,4 +107,28 @@ public class GhostControllerBase : MonoBehaviour
             cameraFollow.target = isPlayerControlled ? transform : null;
         }
     }
+
+    private void OnTriggerEnter(Collider other)
+    {
+        if (other.CompareTag("PacMan")) // Ensure the tag is correct
+        {
+            Debug.Log($"Ghost {gameObject.name} collided with PacMan.");
+
+            // Get PacManController script to call the LoseLife method
+            PacManController pacMan = other.GetComponent<PacManController>();
+            if (pacMan != null)
+            {
+                pacMan.LoseLife(); // Call the method to reduce life
+            }
+            else
+            {
+                Debug.LogError("PacManController script is missing on PacMan!");
+            }
+        }
+        else
+        {
+            Debug.Log($"Collision ignored with {other.name}, tag: {other.tag}");
+        }
+    }
+
 }
