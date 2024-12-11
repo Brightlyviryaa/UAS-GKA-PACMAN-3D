@@ -971,7 +971,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   wanderRadius: 10
   detectionRadius: 8
-  ghostSpeed: 0.1
+  ghostSpeed: 1.5
   isPlayerControlled: 0
 --- !u!195 &479725715
 NavMeshAgent:
@@ -1833,6 +1833,7 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 64
   stoppingDistance: 0.5
+  ghostDetectionRadius: 8
   distanceWeight: 1
   ghostProximityWeight: 2
 --- !u!195 &1034145113
@@ -1948,7 +1949,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   wanderRadius: 50
   detectionRadius: 8
-  ghostSpeed: 0.1
+  ghostSpeed: 1.5
   isPlayerControlled: 0
 --- !u!195 &1039483613
 NavMeshAgent:
@@ -4045,7 +4046,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   wanderRadius: 50
   detectionRadius: 8
-  ghostSpeed: 0.1
+  ghostSpeed: 1.5
   isPlayerControlled: 0
 --- !u!195 &1999853756
 NavMeshAgent:
@@ -4294,7 +4295,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   wanderRadius: 50
   detectionRadius: 8
-  ghostSpeed: 0.1
+  ghostSpeed: 1.5
   isPlayerControlled: 0
 --- !u!195 &2087657761
 NavMeshAgent:

@@ -10,6 +10,7 @@ TagManager:
   - Pellets
   - Wall
   - PowerPelletPosition
+  - PowerPellet
   layers:
   - Default
   - TransparentFX

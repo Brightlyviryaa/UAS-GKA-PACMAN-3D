@@ -7,19 +7,19 @@ using BT_PacMan;
 [RequireComponent(typeof(NavMeshAgent))]
 public class PacManController : MonoBehaviour
 {
-    // Enum untuk berbagai state dalam Behavior Tree
     public enum State { Aggressive, Defensive, Safe }
 
     [Header("Settings")]
     public float wanderRadius = 10f;
     public float regularGhostAvoidanceRadius = 5f;
-    public float emergencyGhostAvoidanceRadius = 2f; // Radius untuk kondisi darurat
-    public float predictionTime = 2f; // Waktu memprediksi posisi ghost
+    public float emergencyGhostAvoidanceRadius = 2f;
+    public float predictionTime = 2f;
     public int lives = 3;
     public Transform spawnPoint;
     public LayerMask pelletLayer;
     public LayerMask ghostLayer;
     public float stoppingDistance = 0.5f;
+    public float ghostDetectionRadius = 8f; // Radius untuk deteksi ghost saat powered up
 
     [Header("Utility Weights")]
     public float distanceWeight = 1f;
@@ -27,56 +27,54 @@ public class PacManController : MonoBehaviour
 
     private NavMeshAgent agent;
     private BehaviorTree behaviorTree;
-    private bool hasTarget = false; // Menandakan apakah PacMan sedang punya tujuan
-    private bool isInEmergency = false; // Menandakan apakah sedang dalam kondisi darurat
+    private bool hasTarget = false;
+    private bool isInEmergency = false;
+
+    // Public agar dapat diakses dari luar jika diperlukan
+    public bool isPoweredUp = false;
+    private Coroutine powerRoutine;
 
     void Start()
     {
         agent = GetComponent<NavMeshAgent>();
         InitializeBehaviorTree();
-        behaviorTree.Tick(); // Panggil Tick pertama kali untuk mencari target awal
+        behaviorTree.Tick();
     }
 
     void Update()
     {
-        // Cek apakah ada ghost dalam Emergency Ghost Radius
         bool emergencyGhostPresent = Physics.OverlapSphere(transform.position, emergencyGhostAvoidanceRadius, ghostLayer).Length > 0;
 
         if (emergencyGhostPresent && !isInEmergency)
         {
             Debug.Log("Emergency ghost detected. Re-evaluating target.");
             isInEmergency = true;
-            behaviorTree.Tick(); // Re-evaluate target untuk menghindar secara darurat
+            behaviorTree.Tick();
         }
         else if (!emergencyGhostPresent && isInEmergency)
         {
-            // Jika sudah tidak dalam keadaan darurat, reset flag
             isInEmergency = false;
         }
 
-        // Cek apakah sudah mencapai target
         if (hasTarget && !agent.pathPending && agent.remainingDistance <= stoppingDistance && agent.destination != Vector3.zero)
         {
             Debug.Log("Reached target.");
             agent.ResetPath();
             hasTarget = false;
-            // Cari target baru setelah mencapai tujuan
             behaviorTree.Tick();
         }
 
-        // Jika PacMan tidak punya target (misalnya setelah gagal menemukan posisi), cari tujuan baru
         if (!hasTarget && (agent.destination == Vector3.zero || agent.remainingDistance <= stoppingDistance))
         {
             behaviorTree.Tick();
         }
     }
 
-    // Inisialisasi Behavior Tree
     void InitializeBehaviorTree()
     {
         Selector root = new Selector();
 
-        // Emergency Avoidance memiliki prioritas tertinggi
+        // Emergency Avoidance
         Sequence emergencyAvoidSequence = new Sequence();
         emergencyAvoidSequence.AddChild(new ConditionNode(() => IsGhostWithinRadius(emergencyGhostAvoidanceRadius)));
         emergencyAvoidSequence.AddChild(new ActionNode(AvoidGhostsEmergency));
@@ -87,6 +85,14 @@ public class PacManController : MonoBehaviour
         regularAvoidSequence.AddChild(new ConditionNode(() => IsGhostWithinRadius(regularGhostAvoidanceRadius)));
         regularAvoidSequence.AddChild(new ActionNode(AvoidGhostsRegular));
         root.AddChild(regularAvoidSequence);
+
+        // Chase Ghost (hanya jika powered up)
+        // Menambahkan perilaku baru agar PacMan mengejar ghost jika isPoweredUp = true dan ghost terdeteksi
+        Sequence chaseGhostSequence = new Sequence();
+        chaseGhostSequence.AddChild(new ConditionNode(() => isPoweredUp));
+        chaseGhostSequence.AddChild(new ConditionNode(() => CanSeeGhost()));
+        chaseGhostSequence.AddChild(new ActionNode(ChaseGhost));
+        root.AddChild(chaseGhostSequence);
 
         // Chase Pellet
         Sequence chasePelletSequence = new Sequence();
@@ -99,14 +105,51 @@ public class PacManController : MonoBehaviour
         behaviorTree = new BehaviorTree(root);
     }
 
-    // Kondisi untuk mengecek apakah ada ghost dalam radius tertentu
     bool IsGhostWithinRadius(float radius)
     {
         Collider[] ghosts = Physics.OverlapSphere(transform.position, radius, ghostLayer);
         return ghosts.Length > 0;
     }
 
-    // Fungsi untuk menghindari ghost dalam kondisi darurat
+    bool CanSeeGhost()
+    {
+        Collider[] ghosts = Physics.OverlapSphere(transform.position, ghostDetectionRadius, ghostLayer);
+        return ghosts.Length > 0;
+    }
+
+    Node.NodeState ChaseGhost()
+    {
+        Collider[] ghosts = Physics.OverlapSphere(transform.position, ghostDetectionRadius, ghostLayer);
+        if (ghosts.Length == 0) return Node.NodeState.Failure;
+
+        // Pilih ghost terdekat
+        Transform closestGhost = null;
+        float closestDist = Mathf.Infinity;
+        foreach (Collider g in ghosts)
+        {
+            float dist = Vector3.Distance(transform.position, g.transform.position);
+            if (dist < closestDist)
+            {
+                closestDist = dist;
+                closestGhost = g.transform;
+            }
+        }
+
+        if (closestGhost != null)
+        {
+            if (NavMesh.SamplePosition(closestGhost.position, out NavMeshHit hit, 1.0f, NavMesh.AllAreas))
+            {
+                if (IsWithinMapBounds(hit.position))
+                {
+                    SetDestination(hit.position);
+                    return Node.NodeState.Running;
+                }
+            }
+        }
+
+        return Node.NodeState.Failure;
+    }
+
     Node.NodeState AvoidGhostsEmergency()
     {
         Collider[] ghosts = Physics.OverlapSphere(transform.position, emergencyGhostAvoidanceRadius, ghostLayer);
@@ -126,15 +169,12 @@ public class PacManController : MonoBehaviour
             }
 
             avoidanceDirection = avoidanceDirection.normalized;
-
-            // Mencoba beberapa skala radius untuk menemukan tempat aman
             float baseRadius = emergencyGhostAvoidanceRadius * 2f;
             float[] radiusScales = { 1f, 1.5f, 2f };
 
             foreach (float scale in radiusScales)
             {
                 float tryRadius = baseRadius * scale;
-                // Coba langsung pada arah avoidanceDirection
                 if (TryFindSafePosition(avoidanceDirection, tryRadius, out Vector3 safePos))
                 {
                     SetDestination(safePos);
@@ -142,7 +182,6 @@ public class PacManController : MonoBehaviour
                     return Node.NodeState.Success;
                 }
 
-                // Jika gagal, coba alternate direction
                 if (TryAlternateDirections(tryRadius, out Vector3 alternatePos, angleIncrement: 30f, maxAttempts: 24))
                 {
                     SetDestination(alternatePos);
@@ -155,7 +194,6 @@ public class PacManController : MonoBehaviour
         return Node.NodeState.Failure;
     }
 
-    // Fungsi untuk menghindari ghost secara reguler
     Node.NodeState AvoidGhostsRegular()
     {
         Collider[] ghosts = Physics.OverlapSphere(transform.position, regularGhostAvoidanceRadius, ghostLayer);
@@ -200,7 +238,6 @@ public class PacManController : MonoBehaviour
         return Node.NodeState.Failure;
     }
 
-    // Fungsi untuk mengejar pellet dengan utility-based decision making
     Node.NodeState ChasePellet()
     {
         Collider[] pellets = Physics.OverlapSphere(transform.position, wanderRadius, pelletLayer);
@@ -240,10 +277,8 @@ public class PacManController : MonoBehaviour
         return Node.NodeState.Failure;
     }
 
-    // Coroutine untuk menghancurkan pellet setelah dicapai
     IEnumerator DestroyPelletAt(Vector3 position)
     {
-        // Tunggu sampai PacMan sampai ke pellet
         yield return new WaitUntil(() => !agent.pathPending && agent.remainingDistance <= stoppingDistance);
 
         Collider[] hitPellets = Physics.OverlapSphere(position, stoppingDistance, pelletLayer);
@@ -253,20 +288,16 @@ public class PacManController : MonoBehaviour
             Debug.Log($"Pellet at {position} eaten.");
         }
 
-        // Setelah makan pellet, cari target baru
         behaviorTree.Tick();
     }
 
-    // Fungsi untuk wandering secara acak
     Node.NodeState Wander()
     {
         Vector3 randomDirection = Random.insideUnitSphere * wanderRadius;
         randomDirection += transform.position;
 
-        NavMeshHit hit;
-        if (NavMesh.SamplePosition(randomDirection, out hit, wanderRadius, NavMesh.AllAreas))
+        if (NavMesh.SamplePosition(randomDirection, out NavMeshHit hit, wanderRadius, NavMesh.AllAreas))
         {
-            // Pastikan tujuan berada dalam batas peta
             if (IsWithinMapBounds(hit.position))
             {
                 SetDestination(hit.position);
@@ -282,7 +313,6 @@ public class PacManController : MonoBehaviour
         return Node.NodeState.Failure;
     }
 
-    // Fungsi untuk menghitung penalti berdasarkan jarak dari ghost
     float CalculateGhostPenalty(Vector3 targetPosition)
     {
         Collider[] ghosts = Physics.OverlapSphere(targetPosition, regularGhostAvoidanceRadius, ghostLayer);
@@ -303,7 +333,6 @@ public class PacManController : MonoBehaviour
         return penalty;
     }
 
-    // Fungsi untuk memprediksi posisi ghost di masa depan
     Vector3 PredictGhostPosition(Transform ghost)
     {
         NavMeshAgent ghostAgent = ghost.GetComponent<NavMeshAgent>();
@@ -314,16 +343,14 @@ public class PacManController : MonoBehaviour
         return ghost.position;
     }
 
-    // Fungsi untuk mengatur tujuan NavMeshAgent
     void SetDestination(Vector3 target)
     {
-        // Pastikan path bisa dicapai
         NavMeshPath path = new NavMeshPath();
         if (agent.CalculatePath(target, path) && path.status == NavMeshPathStatus.PathComplete)
         {
             if (agent.SetDestination(target))
             {
-                hasTarget = true; // Setelah menetapkan tujuan, tandai bahwa kita punya target
+                hasTarget = true;
             }
         }
         else
@@ -332,7 +359,6 @@ public class PacManController : MonoBehaviour
         }
     }
 
-    // Fungsi untuk mengurangi hidup PacMan
     public void LoseLife()
     {
         lives--;
@@ -340,41 +366,40 @@ public class PacManController : MonoBehaviour
         if (lives > 0)
         {
             Debug.Log($"PacMan lost a life! Lives remaining: {lives}");
-            transform.position = spawnPoint.position; // Respawn
+            transform.position = spawnPoint.position;
             agent.ResetPath();
             hasTarget = false;
             isInEmergency = false;
-            behaviorTree.Tick(); // Cari target baru setelah respawn
+            behaviorTree.Tick();
         }
         else
         {
             Debug.Log("PacMan has no lives left. Game Over!");
-            SceneManager.LoadScene("GameOver"); // Ganti "GameOver" sesuai scene
+            SceneManager.LoadScene("GameOver");
         }
     }
 
-    // Menggambar Gizmos untuk radius tertentu di editor
-    private void OnDrawGizmos()
+    private void OnTriggerEnter(Collider other)
     {
-        Gizmos.color = Color.yellow;
-        Gizmos.DrawWireSphere(transform.position, wanderRadius);
-
-        Gizmos.color = Color.red;
-        Gizmos.DrawWireSphere(transform.position, regularGhostAvoidanceRadius);
-
-        Gizmos.color = Color.blue;
-        Gizmos.DrawWireSphere(transform.position, emergencyGhostAvoidanceRadius);
+        // Jika PacMan bersentuhan dengan Ghost (tag Ghost adalah "Player")
+        if (other.CompareTag("Player"))
+        {
+            if (isPoweredUp)
+            {
+                // PacMan dalam mode powered-up, makan ghost (hancurkan ghost)
+                Debug.Log("PacMan ate a ghost!");
+                Destroy(other.gameObject);
+            }
+            else
+            {
+                // Jika tidak powered-up, PacMan kehilangan nyawa
+                LoseLife();
+            }
+        }
     }
 
-    // ---------------------------
-    // Helper Methods
-    // ---------------------------
-
-    // Fungsi untuk memastikan posisi berada dalam batas peta
     bool IsWithinMapBounds(Vector3 position)
     {
-        // Ganti dengan logika yang sesuai untuk memeriksa batas peta Anda
-        // Misalnya, jika peta adalah kotak dari (-50, 0, -50) ke (50, 0, 50):
         float mapMinX = -50f;
         float mapMaxX = 50f;
         float mapMinZ = -50f;
@@ -383,33 +408,6 @@ public class PacManController : MonoBehaviour
         return position.x >= mapMinX && position.x <= mapMaxX && position.z >= mapMinZ && position.z <= mapMaxZ;
     }
 
-    // Fungsi untuk mendapatkan arah alternatif jika arah utama tidak valid
-    Vector3 GetAlternateDirection(float distance)
-    {
-        // Coba beberapa arah alternatif (misalnya, 45 derajat offset)
-        float angleIncrement = 45f;
-        for (int i = 1; i <= 360 / (int)angleIncrement; i++)
-        {
-            float angle = i * angleIncrement;
-            Vector3 direction = Quaternion.Euler(0, angle, 0) * Vector3.forward;
-            Vector3 alternateTarget = transform.position + direction * distance;
-
-            // Validasi apakah alternateTarget berada dalam NavMesh
-            NavMeshHit hit;
-            if (NavMesh.SamplePosition(alternateTarget, out hit, distance, NavMesh.AllAreas))
-            {
-                if (IsWithinMapBounds(hit.position))
-                {
-                    return hit.position;
-                }
-            }
-        }
-
-        // Jika tidak ada arah alternatif yang valid, kembali ke posisi saat ini
-        return transform.position;
-    }
-
-    // Fungsi untuk mencoba menemukan posisi aman langsung pada arah avoidanceDirection
     bool TryFindSafePosition(Vector3 baseDirection, float radius, out Vector3 safePos)
     {
         Vector3 avoidanceTarget = transform.position + baseDirection * radius;
@@ -417,7 +415,6 @@ public class PacManController : MonoBehaviour
         {
             if (IsWithinMapBounds(hit.position) && IsSafeFromGhosts(hit.position))
             {
-                // Cek jalur bisa dilalui
                 NavMeshPath path = new NavMeshPath();
                 if (agent.CalculatePath(hit.position, path) && path.status == NavMeshPathStatus.PathComplete)
                 {
@@ -431,7 +428,6 @@ public class PacManController : MonoBehaviour
         return false;
     }
 
-    // Fungsi ini mencoba banyak sudut dengan angleIncrement yang lebih kecil dan maxAttempts yang lebih banyak
     bool TryAlternateDirections(float distance, out Vector3 alternatePos, float angleIncrement = 30f, int maxAttempts = 12)
     {
         for (int i = 0; i < maxAttempts; i++)
@@ -444,7 +440,6 @@ public class PacManController : MonoBehaviour
             {
                 if (IsWithinMapBounds(hit.position) && IsSafeFromGhosts(hit.position))
                 {
-                    // Check if path is reachable
                     NavMeshPath path = new NavMeshPath();
                     if (agent.CalculatePath(hit.position, path) && path.status == NavMeshPathStatus.PathComplete)
                     {
@@ -459,10 +454,27 @@ public class PacManController : MonoBehaviour
         return false;
     }
 
-    // Fungsi tambahan untuk mengecek apakah posisi cukup jauh dari ghost
     bool IsSafeFromGhosts(Vector3 pos)
     {
         Collider[] ghosts = Physics.OverlapSphere(pos, regularGhostAvoidanceRadius, ghostLayer);
         return ghosts.Length == 0;
+    }
+
+    public void ActivatePowerMode(float duration)
+    {
+        if (powerRoutine != null)
+        {
+            StopCoroutine(powerRoutine);
+        }
+        powerRoutine = StartCoroutine(PowerModeCoroutine(duration));
+    }
+
+    IEnumerator PowerModeCoroutine(float duration)
+    {
+        isPoweredUp = true;
+        Debug.Log("PacMan is now powered up and can eat ghosts!");
+        yield return new WaitForSeconds(duration);
+        isPoweredUp = false;
+        Debug.Log("Power mode ended. PacMan no longer can eat ghosts.");
     }
 }

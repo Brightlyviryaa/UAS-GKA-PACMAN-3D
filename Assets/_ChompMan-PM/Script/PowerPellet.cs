@@ -4,20 +4,22 @@ public class PowerPellet : Pellet
 {
     public float effectDuration = 5f; // Durasi efek Power Pellet
 
-    // Override metode induk
     protected override void OnTriggerEnter(Collider other)
     {
-        base.OnTriggerEnter(other); // Panggil logika dasar dari Pellet
+        base.OnTriggerEnter(other);
 
         if (other.CompareTag("PacMan"))
         {
-            ActivatePowerEffect(); // Tambahkan efek khusus PowerPellet
+            PacManController pacMan = other.GetComponent<PacManController>();
+            if (pacMan != null)
+            {
+                pacMan.ActivatePowerMode(effectDuration);
+                Debug.Log("Power Pellet activated! PacMan can eat ghosts now.");
+            }
+            else
+            {
+                Debug.LogError("PacManController script is missing on PacMan!");
+            }
         }
-    }
-
-    private void ActivatePowerEffect()
-    {
-        Debug.Log("Power Pellet activated! Applying special effects.");
-        // Tambahkan logika efek PowerPellet di sini
     }
 }

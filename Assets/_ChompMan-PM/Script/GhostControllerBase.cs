@@ -1,5 +1,4 @@
 using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.AI;
 using BT_PacMan;
@@ -9,10 +8,15 @@ using BT_PacMan;
 [RequireComponent(typeof(Rigidbody))]
 public class GhostControllerBase : MonoBehaviour
 {
+    [Header("Movement Settings")]
     public float wanderRadius = 15f;
     public float detectionRadius = 1f;
-    public float ghostSpeed = 0.1f;
+    public float ghostSpeed = 1.5f; // Ubah menjadi 1.5f agar ghost lebih lambat
     public bool isPlayerControlled = false;
+
+    [Header("Respawn Settings")]
+    public Transform ghostSpawnPoint; // Assign melalui Inspector
+    public float respawnCooldown = 3f;
 
     private NavMeshAgent agent;
     private BehaviorTree behaviorTree;
@@ -24,20 +28,27 @@ public class GhostControllerBase : MonoBehaviour
 
     void Start()
     {
+        // Pastikan CapsuleCollider bukan trigger
         CapsuleCollider capsuleCollider = GetComponent<CapsuleCollider>();
         capsuleCollider.isTrigger = false;
 
+        // Inisialisasi NavMeshAgent
         agent = GetComponent<NavMeshAgent>();
-        agent.speed = ghostSpeed;
+        agent.speed = ghostSpeed; // Terapkan kecepatan ghost AI maupun player-controlled
 
-        // Cari PacMan
+        // Cari PacMan di scene
         GameObject pacManObj = GameObject.FindGameObjectWithTag("PacMan");
         if (pacManObj != null)
         {
             pacMan = pacManObj.GetComponent<PacManController>();
             pacManTransform = pacManObj.transform;
         }
+        else
+        {
+            Debug.LogError("PacMan dengan tag 'PacMan' tidak ditemukan di scene!");
+        }
 
+        // Inisialisasi Behavior Tree hanya jika bukan player controlled
         if (!isPlayerControlled)
         {
             InitializeBehaviorTree();
@@ -58,7 +69,8 @@ public class GhostControllerBase : MonoBehaviour
 
     protected virtual void HandlePlayerControl()
     {
-        float moveSpeed = 5f;
+        // Gunakan ghostSpeed agar kecepatan player controlled ghost sama dengan AI (1.5f)
+        float moveSpeed = ghostSpeed;
         float moveHorizontal = Input.GetAxis("Horizontal") * moveSpeed * Time.deltaTime;
         float moveVertical = Input.GetAxis("Vertical") * moveSpeed * Time.deltaTime;
 
@@ -84,6 +96,7 @@ public class GhostControllerBase : MonoBehaviour
         else
         {
             agent.isStopped = false;
+            behaviorTree.Tick(); // Mulai Behavior Tree kembali
         }
 
         CameraFollow cameraFollow = Camera.main.GetComponent<CameraFollow>();
@@ -97,12 +110,20 @@ public class GhostControllerBase : MonoBehaviour
     {
         if (other.CompareTag("PacMan"))
         {
-            Debug.Log($"Ghost {gameObject.name} collided with PacMan.");
-
-            PacManController pacManScript = other.GetComponent<PacManController>();
-            if (pacManScript != null)
+            if (pacMan != null)
             {
-                pacManScript.LoseLife();
+                if (pacMan.isPoweredUp)
+                {
+                    // Ghost dimakan oleh PacMan
+                    Debug.Log($"Ghost {gameObject.name} eaten by PacMan!");
+                    StartCoroutine(EatAndRespawn());
+                }
+                else
+                {
+                    // PacMan kehilangan nyawa
+                    Debug.Log($"Ghost {gameObject.name} collided with PacMan. PacMan loses a life.");
+                    pacMan.LoseLife();
+                }
             }
             else
             {
@@ -115,12 +136,20 @@ public class GhostControllerBase : MonoBehaviour
     {
         Selector root = new Selector();
 
+        // Sequence untuk fleeing saat PacMan powered-up
+        Sequence fleePacManSequence = new Sequence();
+        fleePacManSequence.AddChild(new ConditionNode(IsPacManPoweredUp));
+        fleePacManSequence.AddChild(new ConditionNode(CanSeePacMan));
+        fleePacManSequence.AddChild(new ActionNode(FleePacMan));
+        root.AddChild(fleePacManSequence);
+
+        // Sequence untuk mengejar PacMan normal (hanya jika tidak powered-up)
         Sequence chasePacManSequence = new Sequence();
         chasePacManSequence.AddChild(new ConditionNode(CanSeePacMan));
         chasePacManSequence.AddChild(new ActionNode(ChasePacMan));
         root.AddChild(chasePacManSequence);
 
-        // ActionNode wander
+        // ActionNode untuk wander
         root.AddChild(new ActionNode(WanderAction));
 
         behaviorTree = new BehaviorTree(root);
@@ -135,6 +164,15 @@ public class GhostControllerBase : MonoBehaviour
         return distance <= detectionRadius;
     }
 
+    bool IsPacManPoweredUp()
+    {
+        if (pacMan != null)
+        {
+            return pacMan.isPoweredUp;
+        }
+        return false;
+    }
+
     Node.NodeState ChasePacMan()
     {
         if (pacManTransform == null)
@@ -145,6 +183,42 @@ public class GhostControllerBase : MonoBehaviour
             // Selama PacMan terlihat, kembalikan Running
             return Node.NodeState.Running;
         }
+        return Node.NodeState.Failure;
+    }
+
+    Node.NodeState FleePacMan()
+    {
+        if (pacManTransform == null)
+            return Node.NodeState.Failure;
+
+        Vector3 directionAway = transform.position - pacManTransform.position;
+        if (directionAway == Vector3.zero)
+        {
+            directionAway = Random.insideUnitSphere;
+        }
+        directionAway.Normalize();
+
+        Vector3 fleeTarget = transform.position + directionAway * wanderRadius;
+
+        // Validasi fleeTarget agar tetap dalam NavMesh
+        if (NavMesh.SamplePosition(fleeTarget, out NavMeshHit hit, wanderRadius, NavMesh.AllAreas))
+        {
+            if (IsWithinMapBounds(hit.position))
+            {
+                agent.SetDestination(hit.position);
+                Debug.Log($"Ghost {gameObject.name} fleeing to {hit.position}");
+                return Node.NodeState.Success;
+            }
+        }
+
+        // Jika tidak valid, coba arah lain
+        if (TryAlternateDirections(wanderRadius, out Vector3 alternatePos, angleIncrement: 30f, maxAttempts: 12))
+        {
+            agent.SetDestination(alternatePos);
+            Debug.Log($"Ghost {gameObject.name} fleeing to alternate {alternatePos}");
+            return Node.NodeState.Success;
+        }
+
         return Node.NodeState.Failure;
     }
 
@@ -162,10 +236,69 @@ public class GhostControllerBase : MonoBehaviour
             {
                 currentWanderTarget = hit.position;
                 agent.SetDestination(currentWanderTarget);
+                Debug.Log($"Ghost {gameObject.name} wandering to {hit.position}");
             }
         }
 
         // Selalu kembalikan Running agar ghost terus wander
         return Node.NodeState.Running;
+    }
+
+    bool IsWithinMapBounds(Vector3 position)
+    {
+        // Ganti dengan logika yang sesuai untuk memeriksa batas peta Anda
+        float mapMinX = -50f;
+        float mapMaxX = 50f;
+        float mapMinZ = -50f;
+        float mapMaxZ = 50f;
+
+        return position.x >= mapMinX && position.x <= mapMaxX && position.z >= mapMinZ && position.z <= mapMaxZ;
+    }
+
+    bool TryAlternateDirections(float distance, out Vector3 alternatePos, float angleIncrement = 30f, int maxAttempts = 12)
+    {
+        for (int i = 0; i < maxAttempts; i++)
+        {
+            float angle = i * angleIncrement;
+            Vector3 direction = Quaternion.Euler(0, angle, 0) * Vector3.forward;
+            Vector3 alternateTarget = transform.position + direction * distance;
+
+            if (NavMesh.SamplePosition(alternateTarget, out NavMeshHit hit, distance, NavMesh.AllAreas))
+            {
+                if (IsWithinMapBounds(hit.position))
+                {
+                    alternatePos = hit.position;
+                    return true;
+                }
+            }
+        }
+
+        alternatePos = Vector3.zero;
+        return false;
+    }
+
+    IEnumerator EatAndRespawn()
+    {
+        // Hentikan agent
+        agent.isStopped = true;
+
+        // Hancurkan ghost
+        gameObject.SetActive(false);
+        Debug.Log($"Ghost {gameObject.name} has been eaten and will respawn in {respawnCooldown} seconds.");
+
+        // Tunggu cooldown
+        yield return new WaitForSeconds(respawnCooldown);
+
+        // Respawn di GhostSpawnPoint
+        transform.position = ghostSpawnPoint.position;
+        gameObject.SetActive(true);
+        agent.isStopped = false;
+        Debug.Log($"Ghost {gameObject.name} has respawned at {ghostSpawnPoint.position}.");
+
+        // Restart Behavior Tree jika bukan player controlled
+        if (!isPlayerControlled)
+        {
+            behaviorTree.Tick();
+        }
     }
 }
