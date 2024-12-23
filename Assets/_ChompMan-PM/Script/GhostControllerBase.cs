@@ -247,10 +247,10 @@ public class GhostControllerBase : MonoBehaviour
     bool IsWithinMapBounds(Vector3 position)
     {
         // Ganti dengan logika yang sesuai untuk memeriksa batas peta Anda
-        float mapMinX = -50f;
-        float mapMaxX = 50f;
-        float mapMinZ = -50f;
-        float mapMaxZ = 50f;
+        float mapMinX = -20f;
+        float mapMaxX = 20f;
+        float mapMinZ = -20f;
+        float mapMaxZ = 20f;
 
         return position.x >= mapMinX && position.x <= mapMaxX && position.z >= mapMinZ && position.z <= mapMaxZ;
     }
