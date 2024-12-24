@@ -4,11 +4,15 @@ using UnityEngine;
 
 public class TEST2_MazeGenerator : MonoBehaviour
 {
-    [SerializeField] private GameObject mazeBlockPrefab;  // Reference to the TEST_MazeBlock prefab
-    [SerializeField] private int mazeWidth = 10;          // Width of the maze (number of blocks)
-    [SerializeField] private int mazeDepth = 10;          // Depth of the maze (number of blocks)
+    [SerializeField] private GameObject mazeBlockPrefab;   // Reference to the TEST_MazeBlock prefab
+    [SerializeField] private GameObject pelletPrefab;      // Reference to the regular pellet prefab
+    [SerializeField] private GameObject powerPelletPrefab; // Reference to the power pellet prefab
+    [SerializeField] private int mazeWidth = 10;           // Width of the maze (number of blocks)
+    [SerializeField] private int mazeDepth = 10;           // Depth of the maze (number of blocks)
     [SerializeField] private Vector2Int spawnPointSize = new Vector2Int(3, 3);  // The size of the ghost spawn point (3x3 area, for example)
-
+    [SerializeField] private int pelletCount = 20;         // Number of regular pellets to spawn
+    [SerializeField] private int powerPelletCount = 4;    // Number of power pellets to spawn
+    private List<Vector3> usedPositions = new List<Vector3>();  // List to track used positions
     void Start()
     {
         // Ensure spawnPointSize.x is at least 4
@@ -19,6 +23,7 @@ public class TEST2_MazeGenerator : MonoBehaviour
         }
 
         GenerateMazeBorder();  // Generate the maze border instantly
+        SpawnPellets();
     }
 
     void GenerateMazeBorder()
@@ -40,6 +45,7 @@ public class TEST2_MazeGenerator : MonoBehaviour
             {
                 // Instantiate the maze block at the correct position
                 Vector3 position = new Vector3(x, 0, z); // Position the blocks along x and z axis
+                Vector3 nextPosition = new Vector3(x, 0, z+1); // Position the blocks along x and z axis    
                 GameObject mazeBlock = Instantiate(mazeBlockPrefab, position, Quaternion.identity, transform);  // Instantiate and parent it to this object
 
                 // Check if TEST_MazeBlock component exists on the instantiated block
@@ -83,15 +89,16 @@ public class TEST2_MazeGenerator : MonoBehaviour
                             if (x == middleX1 || x == middleX2)
                             {
                                 // Leave the front wall open for middle prefabs
+                                usedPositions.Add(position);
                                 continue;
                             }
                         }
 
                         // Add walls for the spawn area's boundary
-                        if (x == spawnStartX) mazeBlockScript.SetLeftWall();
-                        if (x == spawnEndX) mazeBlockScript.SetRightWall();
-                        if (z == spawnStartZ) mazeBlockScript.SetRearWall();
-                        if (z == spawnEndZ) mazeBlockScript.SetFrontWall();
+                        if (x == spawnStartX) mazeBlockScript.SetLeftWall(); usedPositions.Add(position);
+                        if (x == spawnEndX) mazeBlockScript.SetRightWall(); usedPositions.Add(position);
+                        if (z == spawnStartZ) mazeBlockScript.SetRearWall(); usedPositions.Add(position);
+                        if (z == spawnEndZ) mazeBlockScript.SetFrontWall(); usedPositions.Add(position);
                     }
                     else
                     {
@@ -99,11 +106,13 @@ public class TEST2_MazeGenerator : MonoBehaviour
                         if (!isAdjacentToSpawn && x != 0 && x != mazeWidth - 1 && z != 0 && z != mazeDepth - 1)
                         {
                             // Randomize between the two states
-                            if (Random.value > 0.65f)
+                            if (Random.value > 0.68f)
                             {
                                 // Set all walls and centerFill
                                 mazeBlockScript.ClearAllWalls();
                                 mazeBlockScript.SetCenterFill();
+                                usedPositions.Add(position);
+                                usedPositions.Add(nextPosition);
                             }
                             else
                             {
@@ -116,5 +125,35 @@ public class TEST2_MazeGenerator : MonoBehaviour
                 }
             }
         }
+    }
+    void SpawnPellets()
+    {
+        // Spawn regular pellets
+        for (int i = 0; i < pelletCount; i++)
+        {
+            Vector3 spawnPosition = GetRandomEmptyPosition();
+            Instantiate(pelletPrefab, spawnPosition, Quaternion.identity);
+            usedPositions.Add(spawnPosition);
+        }
+
+        // Spawn power pellets
+        for (int i = 0; i < powerPelletCount; i++)
+        {
+            Vector3 spawnPosition = GetRandomEmptyPosition();
+            Instantiate(powerPelletPrefab, spawnPosition, Quaternion.identity);
+        }
+    }
+
+    Vector3 GetRandomEmptyPosition()
+    {
+        Vector3 randomPosition;
+        do
+        {
+            int x = Random.Range(1, mazeWidth - 1);  // Avoid edges
+            int z = Random.Range(1, mazeDepth - 1);
+            randomPosition = new Vector3(x, 0, z);
+        } while (usedPositions.Contains(randomPosition));  // Ensure the position is not "used"
+
+        return randomPosition;
     }
 }
