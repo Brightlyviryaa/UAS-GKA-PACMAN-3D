@@ -18,7 +18,7 @@ public class GhostControllerBase : MonoBehaviour
     public Transform ghostSpawnPoint; // Assign melalui Inspector
     public float respawnCooldown = 3f;
 
-    private NavMeshAgent agent;
+    protected NavMeshAgent agent;
     private BehaviorTree behaviorTree;
     private PacManController pacMan;
     private Transform pacManTransform;
@@ -55,7 +55,7 @@ public class GhostControllerBase : MonoBehaviour
         }
     }
 
-    void Update()
+    protected virtual void Update()
     {
         if (isPlayerControlled)
         {
