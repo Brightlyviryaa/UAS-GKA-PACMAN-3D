@@ -15,7 +15,6 @@ public class PacManController : MonoBehaviour
     public float emergencyGhostAvoidanceRadius = 2f;
     public float predictionTime = 2f;
     public int lives = 3;
-    public Transform spawnPoint;
     public LayerMask pelletLayer;
     public LayerMask ghostLayer;
     public float stoppingDistance = 0.5f;
@@ -33,6 +32,9 @@ public class PacManController : MonoBehaviour
     // Public agar dapat diakses dari luar jika diperlukan
     public bool isPoweredUp = false;
     private Coroutine powerRoutine;
+
+    [SerializeField]
+    public Transform spawnPoint;
 
     void Start()
     {
@@ -366,8 +368,14 @@ public class PacManController : MonoBehaviour
         if (lives > 0)
         {
             Debug.Log($"PacMan lost a life! Lives remaining: {lives}");
+            Debug.Log($"Respawning at {spawnPoint.position}");
             transform.position = spawnPoint.position;
-            agent.ResetPath();
+            Debug.Log($"Current position: {transform.position}");
+            if (agent != null)
+            {
+                agent.ResetPath();
+                agent.Warp(spawnPoint.position); // Move agent directly to spawn point
+            }
             hasTarget = false;
             isInEmergency = false;
             behaviorTree.Tick();
@@ -400,10 +408,10 @@ public class PacManController : MonoBehaviour
 
     bool IsWithinMapBounds(Vector3 position)
     {
-        float mapMinX = -50f;
-        float mapMaxX = 50f;
-        float mapMinZ = -50f;
-        float mapMaxZ = 50f;
+        float mapMinX = 0f;
+        float mapMaxX = 20f;
+        float mapMinZ = 0f;
+        float mapMaxZ = 20f;
 
         return position.x >= mapMinX && position.x <= mapMaxX && position.z >= mapMinZ && position.z <= mapMaxZ;
     }

@@ -794,9 +794,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5daf99a28b505b949a261f7e96844233, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  wanderRadius: 10
+  wanderRadius: 80
   detectionRadius: 8
-  ghostSpeed: 1.5
+  ghostSpeed: 3
   isPlayerControlled: 0
   ghostSpawnPoint: {fileID: 0}
   respawnCooldown: 3
@@ -1779,7 +1779,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   wanderRadius: 50
   detectionRadius: 8
-  ghostSpeed: 1.5
+  ghostSpeed: 3
   isPlayerControlled: 0
   ghostSpawnPoint: {fileID: 0}
   respawnCooldown: 3
@@ -4006,7 +4006,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   wanderRadius: 50
   detectionRadius: 8
-  ghostSpeed: 1.5
+  ghostSpeed: 3
   isPlayerControlled: 0
   ghostSpawnPoint: {fileID: 0}
   respawnCooldown: 3
@@ -4257,7 +4257,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   wanderRadius: 50
   detectionRadius: 8
-  ghostSpeed: 1.5
+  ghostSpeed: 3
   isPlayerControlled: 0
   ghostSpawnPoint: {fileID: 0}
   respawnCooldown: 3
