@@ -28,7 +28,11 @@ public class GhostControllerBase : MonoBehaviour
 
     public GameObject[] allGhosts;
 
-    public bool isInvisible = false;    
+    public bool isInvisible = false;
+
+    private Material originalMaterial;
+    public Material scaredMaterial;
+    private Renderer ghostRenderer;
 
     protected virtual void Start()
     {
@@ -60,10 +64,29 @@ public class GhostControllerBase : MonoBehaviour
 
         // Handle collision with other ghosts
         IgnoreGhostCollisions();
+
+        ghostRenderer = GetComponent<Renderer>();
+        if (ghostRenderer != null)
+        {
+            originalMaterial = ghostRenderer.material;
+        }
+        else
+        {
+            Debug.LogError("Renderer not found on the ghost object!");
+        }        
     }
 
     protected virtual void Update()
     {
+        if (pacMan.isPoweredUp)
+        {
+            SetGhostMaterial(scaredMaterial); // Change to scared material
+        }
+        else
+        {
+            SetGhostMaterial(originalMaterial);
+        }
+
         if (isPlayerControlled)
         {
             HandlePlayerControl();
@@ -71,6 +94,19 @@ public class GhostControllerBase : MonoBehaviour
         else
         {
             behaviorTree.Tick();
+        }
+    }
+
+    public void SetGhostMaterial(Material newMaterial)
+    {
+        // Set the material of the ghost
+        if (ghostRenderer != null)
+        {
+            ghostRenderer.material = newMaterial;
+        }
+        else
+        {
+            Debug.LogError("Renderer not found on the ghost object!");
         }
     }
 
