@@ -334,6 +334,11 @@ PrefabInstance:
       propertyPath: m_AABB.m_Extent.z
       value: 0.43635452
       objectReference: {fileID: 0}
+    - target: {fileID: 6706788707951938697, guid: 41f5bb0172a94a4459eee9900b6bf02c,
+        type: 3}
+      propertyPath: m_Materials.Array.data[0]
+      value: 
+      objectReference: {fileID: 2100000, guid: 26bcbe1ab7bf213448c16169f6208712, type: 2}
     - target: {fileID: 6706788707963437449, guid: 41f5bb0172a94a4459eee9900b6bf02c,
         type: 3}
       propertyPath: m_Name
@@ -453,15 +458,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5daf99a28b505b949a261f7e96844233, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  wanderRadius: 80
+  wanderRadius: 50
   detectionRadius: 8
   ghostSpeed: 3
   isPlayerControlled: 0
   ghostSpawnPoint: {fileID: 0}
   respawnCooldown: 3
-  speedBoostMultiplier: 2
-  skillDuration: 5
-  skillCooldown: 10
+  allGhosts: []
+  isInvisible: 0
+  skillDuration: 30
+  skillCooldown: 15
 --- !u!195 &479725715
 NavMeshAgent:
   m_ObjectHideFlags: 0
@@ -480,10 +486,10 @@ NavMeshAgent:
   m_AutoTraverseOffMeshLink: 1
   m_AutoBraking: 1
   m_AutoRepath: 1
-  m_Height: 2.2533157
+  m_Height: 1
   m_BaseOffset: 0
   m_WalkableMask: 4294967295
-  m_ObstacleAvoidanceType: 4
+  m_ObstacleAvoidanceType: 0
 --- !u!4 &479725717 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 6706788707963542953, guid: 41f5bb0172a94a4459eee9900b6bf02c,
@@ -503,7 +509,7 @@ CapsuleCollider:
     m_Bits: 0
   m_ExcludeLayers:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 64
   m_LayerOverridePriority: 0
   m_IsTrigger: 0
   m_ProvidesContacts: 0
@@ -538,8 +544,8 @@ Rigidbody:
   m_UseGravity: 0
   m_IsKinematic: 1
   m_Interpolate: 0
-  m_Constraints: 0
-  m_CollisionDetection: 0
+  m_Constraints: 4
+  m_CollisionDetection: 3
 --- !u!1001 &714356835
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -807,24 +813,6 @@ GameObject:
     type: 3}
   m_PrefabInstance: {fileID: 1197524862}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &1039483612
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1039483611}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2747c9b1612b6a04dbc0dc1c7b719eea, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  wanderRadius: 50
-  detectionRadius: 8
-  ghostSpeed: 3
-  isPlayerControlled: 0
-  ghostSpawnPoint: {fileID: 0}
-  respawnCooldown: 3
 --- !u!195 &1039483613
 NavMeshAgent:
   m_ObjectHideFlags: 0
@@ -843,10 +831,10 @@ NavMeshAgent:
   m_AutoTraverseOffMeshLink: 1
   m_AutoBraking: 1
   m_AutoRepath: 1
-  m_Height: 2.2533157
+  m_Height: 1
   m_BaseOffset: 0
   m_WalkableMask: 4294967295
-  m_ObstacleAvoidanceType: 4
+  m_ObstacleAvoidanceType: 0
 --- !u!136 &1039483616
 CapsuleCollider:
   m_ObjectHideFlags: 0
@@ -860,14 +848,14 @@ CapsuleCollider:
     m_Bits: 0
   m_ExcludeLayers:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 64
   m_LayerOverridePriority: 0
   m_IsTrigger: 0
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 2
-  m_Radius: 0.43635452
-  m_Height: 1.0726548
+  m_Radius: 0.4363545
+  m_Height: 1.072655
   m_Direction: 1
   m_Center: {x: 0.008497089, y: 0.5903304, z: -0.071640596}
 --- !u!54 &1039483617
@@ -895,8 +883,32 @@ Rigidbody:
   m_UseGravity: 0
   m_IsKinematic: 1
   m_Interpolate: 0
-  m_Constraints: 0
-  m_CollisionDetection: 0
+  m_Constraints: 4
+  m_CollisionDetection: 3
+--- !u!114 &1039483620
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1039483611}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2747c9b1612b6a04dbc0dc1c7b719eea, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  wanderRadius: 50
+  detectionRadius: 8
+  ghostSpeed: 3
+  isPlayerControlled: 0
+  ghostSpawnPoint: {fileID: 0}
+  respawnCooldown: 3
+  allGhosts: []
+  isInvisible: 0
+  decoyPrefab: {fileID: 7806794671288245942, guid: f5b04c00596c68849bce306679cbfc06,
+    type: 3}
+  decoyDuration: 20
+  skillCooldown: 10
 --- !u!1 &1039760264
 GameObject:
   m_ObjectHideFlags: 0
@@ -1153,15 +1165,15 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 9163715946089988518, guid: bbf054d6e436c51468be981115a84991,
         type: 3}
       insertIndex: -1
-      addedObject: {fileID: 1039483612}
-    - targetCorrespondingSourceObject: {fileID: 9163715946089988518, guid: bbf054d6e436c51468be981115a84991,
-        type: 3}
-      insertIndex: -1
       addedObject: {fileID: 1039483616}
     - targetCorrespondingSourceObject: {fileID: 9163715946089988518, guid: bbf054d6e436c51468be981115a84991,
         type: 3}
       insertIndex: -1
       addedObject: {fileID: 1039483617}
+    - targetCorrespondingSourceObject: {fileID: 9163715946089988518, guid: bbf054d6e436c51468be981115a84991,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1039483620}
   m_SourcePrefab: {fileID: 100100000, guid: bbf054d6e436c51468be981115a84991, type: 3}
 --- !u!1001 &1312079218
 PrefabInstance:
@@ -1783,6 +1795,11 @@ MonoBehaviour:
   isPlayerControlled: 0
   ghostSpawnPoint: {fileID: 0}
   respawnCooldown: 3
+  allGhosts: []
+  isInvisible: 0
+  speedBoostMultiplier: 2
+  skillDuration: 5
+  skillCooldown: 5
 --- !u!195 &1999853756
 NavMeshAgent:
   m_ObjectHideFlags: 0
@@ -1801,10 +1818,10 @@ NavMeshAgent:
   m_AutoTraverseOffMeshLink: 1
   m_AutoBraking: 1
   m_AutoRepath: 1
-  m_Height: 2.2533157
+  m_Height: 1
   m_BaseOffset: 0
   m_WalkableMask: 4294967295
-  m_ObstacleAvoidanceType: 4
+  m_ObstacleAvoidanceType: 0
 --- !u!136 &1999853759
 CapsuleCollider:
   m_ObjectHideFlags: 0
@@ -1818,7 +1835,7 @@ CapsuleCollider:
     m_Bits: 0
   m_ExcludeLayers:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 64
   m_LayerOverridePriority: 0
   m_IsTrigger: 0
   m_ProvidesContacts: 0
@@ -1853,8 +1870,8 @@ Rigidbody:
   m_UseGravity: 0
   m_IsKinematic: 1
   m_Interpolate: 0
-  m_Constraints: 0
-  m_CollisionDetection: 0
+  m_Constraints: 4
+  m_CollisionDetection: 3
 --- !u!1 &2087657759 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 722881024703805765, guid: f4c0092c8046f484a80394f3f076d9d7,
@@ -1879,6 +1896,8 @@ MonoBehaviour:
   isPlayerControlled: 0
   ghostSpawnPoint: {fileID: 0}
   respawnCooldown: 3
+  allGhosts: []
+  isInvisible: 0
   phaseDuration: 5
   skillCooldown: 10
 --- !u!195 &2087657761
@@ -1899,10 +1918,10 @@ NavMeshAgent:
   m_AutoTraverseOffMeshLink: 1
   m_AutoBraking: 1
   m_AutoRepath: 1
-  m_Height: 2.2533157
+  m_Height: 1
   m_BaseOffset: 0
   m_WalkableMask: 4294967295
-  m_ObstacleAvoidanceType: 4
+  m_ObstacleAvoidanceType: 0
 --- !u!136 &2087657764
 CapsuleCollider:
   m_ObjectHideFlags: 0
@@ -1916,7 +1935,7 @@ CapsuleCollider:
     m_Bits: 0
   m_ExcludeLayers:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 64
   m_LayerOverridePriority: 0
   m_IsTrigger: 0
   m_ProvidesContacts: 0
@@ -1951,8 +1970,8 @@ Rigidbody:
   m_UseGravity: 0
   m_IsKinematic: 1
   m_Interpolate: 0
-  m_Constraints: 0
-  m_CollisionDetection: 0
+  m_Constraints: 4
+  m_CollisionDetection: 3
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

@@ -38,7 +38,7 @@ public class GhostManager : MonoBehaviour
         }
     }
 
-        void SwitchGhost(int newGhostIndex)
+    void SwitchGhost(int newGhostIndex)
     {
         if (newGhostIndex < 0 || newGhostIndex >= ghosts.Length)
         {
@@ -49,6 +49,13 @@ public class GhostManager : MonoBehaviour
         // Disable control for the current ghost
         if (currentGhostIndex < ghosts.Length)
         {
+            // Check if the current ghost is the Pink Ghost and it's phasing
+            PinkGhostController pinkGhostController = ghosts[currentGhostIndex].GetComponent<PinkGhostController>();
+            if (pinkGhostController != null && pinkGhostController.IsPhasing()) // Use the getter
+            {
+                pinkGhostController.StopWallPhase(); // Stop the wall phase if it's active
+            }
+            
             ghosts[currentGhostIndex].GetComponent<GhostControllerBase>().ToggleControl(false);
         }
 
@@ -58,9 +65,6 @@ public class GhostManager : MonoBehaviour
 
         UpdateCameraTarget();
     }
-
-
-
 
     private void UpdateCameraTarget()
     {

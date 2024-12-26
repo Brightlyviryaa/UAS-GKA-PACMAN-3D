@@ -53,4 +53,20 @@ public class PinkGhostController : GhostControllerBase
         yield return new WaitForSeconds(skillCooldown);
         isCooldownActive = false;
     }
+
+    public void StopWallPhase()
+    {
+        if (isPhasing)
+        {
+            // Immediately end the phasing
+            StopCoroutine(ActivateWallPhase()); // Stop the wall-phase coroutine
+            agent.enabled = true; // Re-enable the NavMeshAgent
+            isPhasing = false; // Set the phasing status to false
+        }
+    }
+
+    public bool IsPhasing()
+    {
+        return isPhasing;
+    }
 }

@@ -26,7 +26,11 @@ public class GhostControllerBase : MonoBehaviour
     // Simpan posisi current wander target
     private Vector3 currentWanderTarget;
 
-    void Start()
+    public GameObject[] allGhosts;
+
+    public bool isInvisible = false;    
+
+    protected virtual void Start()
     {
         // Pastikan CapsuleCollider bukan trigger
         CapsuleCollider capsuleCollider = GetComponent<CapsuleCollider>();
@@ -53,6 +57,9 @@ public class GhostControllerBase : MonoBehaviour
         {
             InitializeBehaviorTree();
         }
+
+        // Handle collision with other ghosts
+        IgnoreGhostCollisions();
     }
 
     protected virtual void Update()
@@ -64,6 +71,24 @@ public class GhostControllerBase : MonoBehaviour
         else
         {
             behaviorTree.Tick();
+        }
+    }
+
+    void IgnoreGhostCollisions()
+    {
+        allGhosts = GameObject.FindGameObjectsWithTag("PlayerGhost");
+        CapsuleCollider thisCollider = GetComponent<CapsuleCollider>();
+
+        foreach (var ghost in allGhosts)
+        {
+            if (ghost != this)
+            {
+                CapsuleCollider otherCollider = ghost.GetComponent<CapsuleCollider>();
+                if (otherCollider != null)
+                {
+                    Physics.IgnoreCollision(thisCollider, otherCollider);
+                }
+            }
         }
     }
 

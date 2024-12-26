@@ -3,6 +3,7 @@ using UnityEngine;
 using UnityEngine.AI;
 using UnityEngine.SceneManagement;
 using BT_PacMan;
+using System.Linq;
 
 [RequireComponent(typeof(NavMeshAgent))]
 public class PacManController : MonoBehaviour
@@ -45,7 +46,8 @@ public class PacManController : MonoBehaviour
 
     void Update()
     {
-        bool emergencyGhostPresent = Physics.OverlapSphere(transform.position, emergencyGhostAvoidanceRadius, ghostLayer).Length > 0;
+        bool emergencyGhostPresent = Physics.OverlapSphere(transform.position, emergencyGhostAvoidanceRadius, ghostLayer)
+        .Any(collider => !collider.GetComponent<GhostControllerBase>().isInvisible);  // Only consider visible ghosts
 
         if (emergencyGhostPresent && !isInEmergency)
         {
@@ -116,7 +118,15 @@ public class PacManController : MonoBehaviour
     bool CanSeeGhost()
     {
         Collider[] ghosts = Physics.OverlapSphere(transform.position, ghostDetectionRadius, ghostLayer);
-        return ghosts.Length > 0;
+        foreach (Collider ghost in ghosts)
+        {
+            GhostControllerBase ghostController = ghost.GetComponent<GhostControllerBase>();
+            if (ghostController != null && !ghostController.isInvisible)
+            {
+                return true; // Return true if the ghost is not invisible
+            }
+        }
+        return false;
     }
 
     Node.NodeState ChaseGhost()
@@ -161,8 +171,13 @@ public class PacManController : MonoBehaviour
 
             foreach (Collider ghost in ghosts)
             {
-                Vector3 directionAway = transform.position - ghost.transform.position;
-                avoidanceDirection += directionAway.normalized;
+                GhostControllerBase ghostController = ghost.GetComponent<GhostControllerBase>();
+                // Only avoid ghosts that are visible (i.e., isInvisible is false)
+                if (ghostController != null && !ghostController.isInvisible)
+                {
+                    Vector3 directionAway = transform.position - ghost.transform.position;
+                    avoidanceDirection += directionAway.normalized;
+                }
             }
 
             if (avoidanceDirection == Vector3.zero)
@@ -204,8 +219,13 @@ public class PacManController : MonoBehaviour
             Vector3 avoidanceDirection = Vector3.zero;
             foreach (Collider ghost in ghosts)
             {
-                Vector3 directionAway = transform.position - ghost.transform.position;
-                avoidanceDirection += directionAway.normalized;
+                GhostControllerBase ghostController = ghost.GetComponent<GhostControllerBase>();
+                // Only avoid ghosts that are visible (i.e., isInvisible is false)
+                if (ghostController != null && !ghostController.isInvisible)
+                {
+                    Vector3 directionAway = transform.position - ghost.transform.position;
+                    avoidanceDirection += directionAway.normalized;
+                }
             }
 
             if (avoidanceDirection == Vector3.zero)
