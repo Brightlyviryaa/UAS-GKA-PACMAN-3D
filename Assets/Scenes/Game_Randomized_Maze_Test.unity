@@ -255,7 +255,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 9.5, y: 0, z: 9.6}
-  m_LocalScale: {x: 2, y: 1, z: 2}
+  m_LocalScale: {x: 100, y: 1, z: 100}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
@@ -558,7 +558,7 @@ MonoBehaviour:
   respawnCooldown: 3
   allGhosts: []
   isInvisible: 0
-  scaredMaterial: {fileID: 0}
+  scaredMaterial: {fileID: 2100000, guid: c31e5fac1beb02f4e8774fb2e51e87a3, type: 2}
   skillDuration: 30
   skillCooldown: 15
 --- !u!195 &479725715
@@ -1145,7 +1145,7 @@ MonoBehaviour:
   respawnCooldown: 3
   allGhosts: []
   isInvisible: 0
-  scaredMaterial: {fileID: 0}
+  scaredMaterial: {fileID: 2100000, guid: c31e5fac1beb02f4e8774fb2e51e87a3, type: 2}
   decoyPrefab: {fileID: 7806794671288245942, guid: f5b04c00596c68849bce306679cbfc06,
     type: 3}
   decoyDuration: 20
@@ -1730,11 +1730,6 @@ MonoBehaviour:
     type: 3}
   powerPelletPrefab: {fileID: 1189647692537122, guid: 296eeb3b9bc02fb44927747cd46985d7,
     type: 3}
-  mazeWidth: 20
-  mazeDepth: 20
-  spawnPointSize: {x: 4, y: 2}
-  pelletCount: 50
-  powerPelletCount: 5
 --- !u!4 &1895368138
 Transform:
   m_ObjectHideFlags: 0
@@ -2116,13 +2111,13 @@ MonoBehaviour:
   respawnCooldown: 3
   allGhosts: []
   isInvisible: 0
-  scaredMaterial: {fileID: 0}
+  scaredMaterial: {fileID: 2100000, guid: c31e5fac1beb02f4e8774fb2e51e87a3, type: 2}
   speedBoostMultiplier: 2
   skillDuration: 5
   skillCooldown: 5
-  pulseSpeed: 0.5
-  pulseAmount: 5
-  minPulseIntensity: 0
+  pulseSpeed: 2
+  pulseAmount: 0.5
+  minPulseIntensity: 0.1
 --- !u!195 &1999853756
 NavMeshAgent:
   m_ObjectHideFlags: 0
@@ -2221,7 +2216,7 @@ MonoBehaviour:
   respawnCooldown: 3
   allGhosts: []
   isInvisible: 0
-  scaredMaterial: {fileID: 0}
+  scaredMaterial: {fileID: 2100000, guid: c31e5fac1beb02f4e8774fb2e51e87a3, type: 2}
   phaseDuration: 5
   skillCooldown: 10
   pulseSpeed: 2

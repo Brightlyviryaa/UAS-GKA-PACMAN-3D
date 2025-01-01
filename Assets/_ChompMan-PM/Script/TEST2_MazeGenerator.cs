@@ -7,12 +7,43 @@ public class TEST2_MazeGenerator : MonoBehaviour
     [SerializeField] private GameObject mazeBlockPrefab;   // Reference to the TEST_MazeBlock prefab
     [SerializeField] private GameObject pelletPrefab;      // Reference to the regular pellet prefab
     [SerializeField] private GameObject powerPelletPrefab; // Reference to the power pellet prefab
-    [SerializeField] private int mazeWidth = 10;           // Width of the maze (number of blocks)
-    [SerializeField] private int mazeDepth = 10;           // Depth of the maze (number of blocks)
-    [SerializeField] private Vector2Int spawnPointSize = new Vector2Int(3, 3);  // The size of the ghost spawn point (3x3 area, for example)
-    [SerializeField] private int pelletCount = 20;         // Number of regular pellets to spawn
-    [SerializeField] private int powerPelletCount = 4;    // Number of power pellets to spawn
+    private int mazeWidth = 20;           // Width of the maze (number of blocks)
+    private int mazeDepth = 20;           // Depth of the maze (number of blocks)
+    private Vector2Int spawnPointSize = new Vector2Int(4, 2);  // The size of the ghost spawn point (3x3 area, for example)
+    private int pelletCount = 5;         // Number of regular pellets to spawn
+    private int powerPelletCount = 5;    // Number of power pellets to spawn
     private List<Vector3> usedPositions = new List<Vector3>();  // List to track used positions
+
+    private void Awake()
+    {
+        // Automatically assign prefabs if not already set in the Inspector
+        if (mazeBlockPrefab == null)
+        {
+            mazeBlockPrefab = Resources.Load<GameObject>("Prefabs/TEST_Maze Block");
+        }
+        if (pelletPrefab == null)
+        {
+            pelletPrefab = Resources.Load<GameObject>("Prefabs/Sphere");
+        }
+        if (powerPelletPrefab == null)
+        {
+            powerPelletPrefab = Resources.Load<GameObject>("Prefabs/PowerPellet");
+        }
+
+        // Check if the prefabs were successfully loaded
+        if (mazeBlockPrefab == null)
+        {
+            Debug.LogError("Maze block prefab could not be found. Check the directory path.");
+        }
+        if (pelletPrefab == null)
+        {
+            Debug.LogError("Pellet prefab could not be found. Check the directory path.");
+        }
+        if (powerPelletPrefab == null)
+        {
+            Debug.LogError("Power pellet prefab could not be found. Check the directory path.");
+        }
+    }
     void Start()
     {
         // Ensure spawnPointSize.x is at least 4
