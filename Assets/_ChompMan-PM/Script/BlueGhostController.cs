@@ -15,6 +15,7 @@ public class BlueGhostController : GhostControllerBase
     void Start()
     {
         base.Start();
+        base.isPlayerControlled = true;
         ghostRenderer = GetComponent<Renderer>(); // Access the Renderer component
         ghostMaterial = ghostRenderer.material; // Access the material of the Blue Ghost
         originalColor = ghostMaterial.color; // Store the original color

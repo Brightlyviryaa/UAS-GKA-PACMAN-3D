@@ -29,19 +29,19 @@ public class CooldownButton : MonoBehaviour
         // Handle ghost selection
         if (Input.GetKeyDown(KeyCode.Alpha1))
         {
-            SwitchGhost(0, "SKILL - E");
+            SwitchGhost(0, "Invisibility");
         }
         else if (Input.GetKeyDown(KeyCode.Alpha2))
         {
-            SwitchGhost(1, "SKILL - E");
+            SwitchGhost(1, "Decoy");
         }
         else if (Input.GetKeyDown(KeyCode.Alpha3))
         {
-            SwitchGhost(2, "SKILL - E");
+            SwitchGhost(2, "Wall-Phasing");
         }
         else if (Input.GetKeyDown(KeyCode.Alpha4))
         {
-            SwitchGhost(3, "SKILL - E");
+            SwitchGhost(3, "Movement Speed Buff");
         }
 
         // Handle skill use
@@ -105,7 +105,7 @@ public class CooldownButton : MonoBehaviour
         }
         else
         {
-            buttonText.text = "SKILL - E";
+            buttonText.text = "Skill Available";
         }
     }
 }

@@ -138,7 +138,7 @@ public class TEST2_MazeGenerator : MonoBehaviour
                         if (!isAdjacentToSpawn && x != 0 && x != mazeWidth - 1 && z != 0 && z != mazeDepth - 1)
                         {
                             // Randomize between the two states
-                            if (Random.value > 0.68f)
+                            if (Random.value > 0.70f)
                             {
                                 // Set all walls and centerFill
                                 mazeBlockScript.ClearAllWalls();
