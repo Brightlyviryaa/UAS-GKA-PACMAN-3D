@@ -11,6 +11,7 @@ TagManager:
   - Wall
   - PowerPelletPosition
   - PowerPellet
+  - PlayerGhost
   layers:
   - Default
   - TransparentFX
@@ -19,7 +20,7 @@ TagManager:
   - Water
   - UI
   - Ghost
-  - 
+  - PacMan
   - 
   - 
   - 

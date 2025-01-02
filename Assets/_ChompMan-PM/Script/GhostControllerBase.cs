@@ -18,7 +18,7 @@ public class GhostControllerBase : MonoBehaviour
     public Transform ghostSpawnPoint; // Assign melalui Inspector
     public float respawnCooldown = 3f;
 
-    private NavMeshAgent agent;
+    protected NavMeshAgent agent;
     private BehaviorTree behaviorTree;
     private PacManController pacMan;
     private Transform pacManTransform;
@@ -26,7 +26,15 @@ public class GhostControllerBase : MonoBehaviour
     // Simpan posisi current wander target
     private Vector3 currentWanderTarget;
 
-    void Start()
+    public GameObject[] allGhosts;
+
+    public bool isInvisible = false;
+
+    private Material originalMaterial;
+    public Material scaredMaterial;
+    private Renderer ghostRenderer;
+
+    protected virtual void Start()
     {
         // Pastikan CapsuleCollider bukan trigger
         CapsuleCollider capsuleCollider = GetComponent<CapsuleCollider>();
@@ -53,10 +61,32 @@ public class GhostControllerBase : MonoBehaviour
         {
             InitializeBehaviorTree();
         }
+
+        // Handle collision with other ghosts
+        IgnoreGhostCollisions();
+
+        ghostRenderer = GetComponent<Renderer>();
+        if (ghostRenderer != null)
+        {
+            originalMaterial = ghostRenderer.material;
+        }
+        else
+        {
+            Debug.LogError("Renderer not found on the ghost object!");
+        }        
     }
 
-    void Update()
+    protected virtual void Update()
     {
+        if (pacMan.isPoweredUp)
+        {
+            SetGhostMaterial(scaredMaterial); // Change to scared material
+        }
+        else
+        {
+            SetGhostMaterial(originalMaterial);
+        }
+
         if (isPlayerControlled)
         {
             HandlePlayerControl();
@@ -64,6 +94,37 @@ public class GhostControllerBase : MonoBehaviour
         else
         {
             behaviorTree.Tick();
+        }
+    }
+
+    public void SetGhostMaterial(Material newMaterial)
+    {
+        // Set the material of the ghost
+        if (ghostRenderer != null)
+        {
+            ghostRenderer.material = newMaterial;
+        }
+        else
+        {
+            Debug.LogError("Renderer not found on the ghost object!");
+        }
+    }
+
+    void IgnoreGhostCollisions()
+    {
+        allGhosts = GameObject.FindGameObjectsWithTag("PlayerGhost");
+        CapsuleCollider thisCollider = GetComponent<CapsuleCollider>();
+
+        foreach (var ghost in allGhosts)
+        {
+            if (ghost != this)
+            {
+                CapsuleCollider otherCollider = ghost.GetComponent<CapsuleCollider>();
+                if (otherCollider != null)
+                {
+                    Physics.IgnoreCollision(thisCollider, otherCollider);
+                }
+            }
         }
     }
 
@@ -206,7 +267,7 @@ public class GhostControllerBase : MonoBehaviour
             if (IsWithinMapBounds(hit.position))
             {
                 agent.SetDestination(hit.position);
-                Debug.Log($"Ghost {gameObject.name} fleeing to {hit.position}");
+                //Debug.Log($"Ghost {gameObject.name} fleeing to {hit.position}");
                 return Node.NodeState.Success;
             }
         }
@@ -215,7 +276,7 @@ public class GhostControllerBase : MonoBehaviour
         if (TryAlternateDirections(wanderRadius, out Vector3 alternatePos, angleIncrement: 30f, maxAttempts: 12))
         {
             agent.SetDestination(alternatePos);
-            Debug.Log($"Ghost {gameObject.name} fleeing to alternate {alternatePos}");
+            //Debug.Log($"Ghost {gameObject.name} fleeing to alternate {alternatePos}");
             return Node.NodeState.Success;
         }
 
@@ -236,7 +297,7 @@ public class GhostControllerBase : MonoBehaviour
             {
                 currentWanderTarget = hit.position;
                 agent.SetDestination(currentWanderTarget);
-                Debug.Log($"Ghost {gameObject.name} wandering to {hit.position}");
+                //Debug.Log($"Ghost {gameObject.name} wandering to {hit.position}");
             }
         }
 
@@ -247,10 +308,10 @@ public class GhostControllerBase : MonoBehaviour
     bool IsWithinMapBounds(Vector3 position)
     {
         // Ganti dengan logika yang sesuai untuk memeriksa batas peta Anda
-        float mapMinX = -50f;
-        float mapMaxX = 50f;
-        float mapMinZ = -50f;
-        float mapMaxZ = 50f;
+        float mapMinX = -20f;
+        float mapMaxX = 20f;
+        float mapMinZ = -20f;
+        float mapMaxZ = 20f;
 
         return position.x >= mapMinX && position.x <= mapMaxX && position.z >= mapMinZ && position.z <= mapMaxZ;
     }

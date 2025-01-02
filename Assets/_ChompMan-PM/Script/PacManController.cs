@@ -3,6 +3,7 @@ using UnityEngine;
 using UnityEngine.AI;
 using UnityEngine.SceneManagement;
 using BT_PacMan;
+using System.Linq;
 
 [RequireComponent(typeof(NavMeshAgent))]
 public class PacManController : MonoBehaviour
@@ -15,7 +16,6 @@ public class PacManController : MonoBehaviour
     public float emergencyGhostAvoidanceRadius = 2f;
     public float predictionTime = 2f;
     public int lives = 3;
-    public Transform spawnPoint;
     public LayerMask pelletLayer;
     public LayerMask ghostLayer;
     public float stoppingDistance = 0.5f;
@@ -34,6 +34,9 @@ public class PacManController : MonoBehaviour
     public bool isPoweredUp = false;
     private Coroutine powerRoutine;
 
+    [SerializeField]
+    public Transform spawnPoint;
+
     void Start()
     {
         agent = GetComponent<NavMeshAgent>();
@@ -43,11 +46,12 @@ public class PacManController : MonoBehaviour
 
     void Update()
     {
-        bool emergencyGhostPresent = Physics.OverlapSphere(transform.position, emergencyGhostAvoidanceRadius, ghostLayer).Length > 0;
+        bool emergencyGhostPresent = Physics.OverlapSphere(transform.position, emergencyGhostAvoidanceRadius, ghostLayer)
+        .Any(collider => !collider.GetComponent<GhostControllerBase>().isInvisible);  // Only consider visible ghosts
 
         if (emergencyGhostPresent && !isInEmergency)
         {
-            Debug.Log("Emergency ghost detected. Re-evaluating target.");
+            //Debug.Log("Emergency ghost detected. Re-evaluating target.");
             isInEmergency = true;
             behaviorTree.Tick();
         }
@@ -58,7 +62,7 @@ public class PacManController : MonoBehaviour
 
         if (hasTarget && !agent.pathPending && agent.remainingDistance <= stoppingDistance && agent.destination != Vector3.zero)
         {
-            Debug.Log("Reached target.");
+            //Debug.Log("Reached target.");
             agent.ResetPath();
             hasTarget = false;
             behaviorTree.Tick();
@@ -114,7 +118,15 @@ public class PacManController : MonoBehaviour
     bool CanSeeGhost()
     {
         Collider[] ghosts = Physics.OverlapSphere(transform.position, ghostDetectionRadius, ghostLayer);
-        return ghosts.Length > 0;
+        foreach (Collider ghost in ghosts)
+        {
+            GhostControllerBase ghostController = ghost.GetComponent<GhostControllerBase>();
+            if (ghostController != null && !ghostController.isInvisible)
+            {
+                return true; // Return true if the ghost is not invisible
+            }
+        }
+        return false;
     }
 
     Node.NodeState ChaseGhost()
@@ -159,8 +171,13 @@ public class PacManController : MonoBehaviour
 
             foreach (Collider ghost in ghosts)
             {
-                Vector3 directionAway = transform.position - ghost.transform.position;
-                avoidanceDirection += directionAway.normalized;
+                GhostControllerBase ghostController = ghost.GetComponent<GhostControllerBase>();
+                // Only avoid ghosts that are visible (i.e., isInvisible is false)
+                if (ghostController != null && !ghostController.isInvisible)
+                {
+                    Vector3 directionAway = transform.position - ghost.transform.position;
+                    avoidanceDirection += directionAway.normalized;
+                }
             }
 
             if (avoidanceDirection == Vector3.zero)
@@ -178,14 +195,14 @@ public class PacManController : MonoBehaviour
                 if (TryFindSafePosition(avoidanceDirection, tryRadius, out Vector3 safePos))
                 {
                     SetDestination(safePos);
-                    Debug.Log($"Emergency Avoiding ghosts, moving to {safePos} with scale {scale}");
+                    //Debug.Log($"Emergency Avoiding ghosts, moving to {safePos} with scale {scale}");
                     return Node.NodeState.Success;
                 }
 
                 if (TryAlternateDirections(tryRadius, out Vector3 alternatePos, angleIncrement: 30f, maxAttempts: 24))
                 {
                     SetDestination(alternatePos);
-                    Debug.Log($"Emergency Avoiding ghosts, alternate pos {alternatePos} with scale {scale}");
+                    //Debug.Log($"Emergency Avoiding ghosts, alternate pos {alternatePos} with scale {scale}");
                     return Node.NodeState.Success;
                 }
             }
@@ -202,8 +219,13 @@ public class PacManController : MonoBehaviour
             Vector3 avoidanceDirection = Vector3.zero;
             foreach (Collider ghost in ghosts)
             {
-                Vector3 directionAway = transform.position - ghost.transform.position;
-                avoidanceDirection += directionAway.normalized;
+                GhostControllerBase ghostController = ghost.GetComponent<GhostControllerBase>();
+                // Only avoid ghosts that are visible (i.e., isInvisible is false)
+                if (ghostController != null && !ghostController.isInvisible)
+                {
+                    Vector3 directionAway = transform.position - ghost.transform.position;
+                    avoidanceDirection += directionAway.normalized;
+                }
             }
 
             if (avoidanceDirection == Vector3.zero)
@@ -222,14 +244,14 @@ public class PacManController : MonoBehaviour
                 if (TryFindSafePosition(avoidanceDirection, tryRadius, out Vector3 safePos))
                 {
                     SetDestination(safePos);
-                    Debug.Log($"Regular Avoiding ghosts, moving to {safePos} with scale {scale}");
+                    //Debug.Log($"Regular Avoiding ghosts, moving to {safePos} with scale {scale}");
                     return Node.NodeState.Success;
                 }
 
                 if (TryAlternateDirections(tryRadius, out Vector3 alternatePos, angleIncrement: 30f, maxAttempts: 24))
                 {
                     SetDestination(alternatePos);
-                    Debug.Log($"Regular Avoiding ghosts, alternate pos {alternatePos} with scale {scale}");
+                    //Debug.Log($"Regular Avoiding ghosts, alternate pos {alternatePos} with scale {scale}");
                     return Node.NodeState.Success;
                 }
             }
@@ -266,7 +288,7 @@ public class PacManController : MonoBehaviour
                     if (IsWithinMapBounds(hit.position))
                     {
                         SetDestination(hit.position);
-                        Debug.Log($"Chasing pellet at {hit.position}");
+                        //Debug.Log($"Chasing pellet at {hit.position}");
                         StartCoroutine(DestroyPelletAt(hit.position));
                         return Node.NodeState.Success;
                     }
@@ -285,7 +307,7 @@ public class PacManController : MonoBehaviour
         foreach (var pellet in hitPellets)
         {
             Destroy(pellet.gameObject);
-            Debug.Log($"Pellet at {position} eaten.");
+            //Debug.Log($"Pellet at {position} eaten.");
         }
 
         behaviorTree.Tick();
@@ -301,7 +323,7 @@ public class PacManController : MonoBehaviour
             if (IsWithinMapBounds(hit.position))
             {
                 SetDestination(hit.position);
-                Debug.Log($"Wandering to {hit.position}");
+                //Debug.Log($"Wandering to {hit.position}");
                 return Node.NodeState.Success;
             }
         }
@@ -366,8 +388,14 @@ public class PacManController : MonoBehaviour
         if (lives > 0)
         {
             Debug.Log($"PacMan lost a life! Lives remaining: {lives}");
+            Debug.Log($"Respawning at {spawnPoint.position}");
             transform.position = spawnPoint.position;
-            agent.ResetPath();
+            Debug.Log($"Current position: {transform.position}");
+            if (agent != null)
+            {
+                agent.ResetPath();
+                agent.Warp(spawnPoint.position); // Move agent directly to spawn point
+            }
             hasTarget = false;
             isInEmergency = false;
             behaviorTree.Tick();
@@ -375,7 +403,7 @@ public class PacManController : MonoBehaviour
         else
         {
             Debug.Log("PacMan has no lives left. Game Over!");
-            SceneManager.LoadScene("GameOver");
+            SceneManager.LoadScene("Win");
         }
     }
 
@@ -400,10 +428,10 @@ public class PacManController : MonoBehaviour
 
     bool IsWithinMapBounds(Vector3 position)
     {
-        float mapMinX = -50f;
-        float mapMaxX = 50f;
-        float mapMinZ = -50f;
-        float mapMaxZ = 50f;
+        float mapMinX = 0f;
+        float mapMaxX = 20f;
+        float mapMinZ = 0f;
+        float mapMaxZ = 20f;
 
         return position.x >= mapMinX && position.x <= mapMaxX && position.z >= mapMinZ && position.z <= mapMaxZ;
     }

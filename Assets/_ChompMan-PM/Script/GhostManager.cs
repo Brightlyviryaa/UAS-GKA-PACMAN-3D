@@ -43,57 +43,28 @@ public class GhostManager : MonoBehaviour
         if (newGhostIndex < 0 || newGhostIndex >= ghosts.Length)
         {
             Debug.LogError("Invalid ghost index: " + newGhostIndex);
-            return; // Exit the method if the index is invalid
+            return;
         }
 
-        // Toggle control for the current ghost
+        // Disable control for the current ghost
         if (currentGhostIndex < ghosts.Length)
         {
-            switch (currentGhostIndex)
+            // Check if the current ghost is the Pink Ghost and it's phasing
+            PinkGhostController pinkGhostController = ghosts[currentGhostIndex].GetComponent<PinkGhostController>();
+            if (pinkGhostController != null && pinkGhostController.IsPhasing()) // Use the getter
             {
-                case 0: // Blue Ghost
-                    ghosts[currentGhostIndex].GetComponent<BlueGhostController>().ToggleControl(false);
-                    break;
-                case 1: // Yellow Ghost
-                    ghosts[currentGhostIndex].GetComponent<OrangeGhostController>().ToggleControl(false);
-                    break;
-                case 2: // Red Ghost
-                    ghosts[currentGhostIndex].GetComponent<PinkGhostController>().ToggleControl(false);
-                    break;
-                case 3: // Pink Ghost
-                    ghosts[currentGhostIndex].GetComponent<RedGhostController>().ToggleControl(false);
-                    break;
+                pinkGhostController.StopWallPhase(); // Stop the wall phase if it's active
             }
+            
+            ghosts[currentGhostIndex].GetComponent<GhostControllerBase>().ToggleControl(false);
         }
 
-        // Update to the new ghost index
+        // Enable control for the new ghost
         currentGhostIndex = newGhostIndex;
+        ghosts[currentGhostIndex].GetComponent<GhostControllerBase>().ToggleControl(true);
 
-        // Toggle control for the new ghost
-        if (currentGhostIndex < ghosts.Length)
-        {
-            switch (currentGhostIndex)
-            {
-                case 0: // Blue Ghost
-                    ghosts[currentGhostIndex].GetComponent<BlueGhostController>().ToggleControl(true);
-                    break;
-                case 1: // Yellow Ghost
-                    ghosts[currentGhostIndex].GetComponent<OrangeGhostController>().ToggleControl(true);
-                    break;
-                case 2: // Red Ghost
-                    ghosts[currentGhostIndex].GetComponent<PinkGhostController>().ToggleControl(true);
-                    break;
-                case 3: // Pink Ghost
-                    ghosts[currentGhostIndex].GetComponent<RedGhostController>().ToggleControl(true);
-                    break;
-            }
-        }
-
-        // Update the camera's target
         UpdateCameraTarget();
     }
-
-
 
     private void UpdateCameraTarget()
     {
