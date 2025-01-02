@@ -51,7 +51,7 @@ public class PacManController : MonoBehaviour
 
         if (emergencyGhostPresent && !isInEmergency)
         {
-            Debug.Log("Emergency ghost detected. Re-evaluating target.");
+            //Debug.Log("Emergency ghost detected. Re-evaluating target.");
             isInEmergency = true;
             behaviorTree.Tick();
         }
@@ -62,7 +62,7 @@ public class PacManController : MonoBehaviour
 
         if (hasTarget && !agent.pathPending && agent.remainingDistance <= stoppingDistance && agent.destination != Vector3.zero)
         {
-            Debug.Log("Reached target.");
+            //Debug.Log("Reached target.");
             agent.ResetPath();
             hasTarget = false;
             behaviorTree.Tick();
@@ -195,14 +195,14 @@ public class PacManController : MonoBehaviour
                 if (TryFindSafePosition(avoidanceDirection, tryRadius, out Vector3 safePos))
                 {
                     SetDestination(safePos);
-                    Debug.Log($"Emergency Avoiding ghosts, moving to {safePos} with scale {scale}");
+                    //Debug.Log($"Emergency Avoiding ghosts, moving to {safePos} with scale {scale}");
                     return Node.NodeState.Success;
                 }
 
                 if (TryAlternateDirections(tryRadius, out Vector3 alternatePos, angleIncrement: 30f, maxAttempts: 24))
                 {
                     SetDestination(alternatePos);
-                    Debug.Log($"Emergency Avoiding ghosts, alternate pos {alternatePos} with scale {scale}");
+                    //Debug.Log($"Emergency Avoiding ghosts, alternate pos {alternatePos} with scale {scale}");
                     return Node.NodeState.Success;
                 }
             }
@@ -244,14 +244,14 @@ public class PacManController : MonoBehaviour
                 if (TryFindSafePosition(avoidanceDirection, tryRadius, out Vector3 safePos))
                 {
                     SetDestination(safePos);
-                    Debug.Log($"Regular Avoiding ghosts, moving to {safePos} with scale {scale}");
+                    //Debug.Log($"Regular Avoiding ghosts, moving to {safePos} with scale {scale}");
                     return Node.NodeState.Success;
                 }
 
                 if (TryAlternateDirections(tryRadius, out Vector3 alternatePos, angleIncrement: 30f, maxAttempts: 24))
                 {
                     SetDestination(alternatePos);
-                    Debug.Log($"Regular Avoiding ghosts, alternate pos {alternatePos} with scale {scale}");
+                    //Debug.Log($"Regular Avoiding ghosts, alternate pos {alternatePos} with scale {scale}");
                     return Node.NodeState.Success;
                 }
             }
@@ -288,7 +288,7 @@ public class PacManController : MonoBehaviour
                     if (IsWithinMapBounds(hit.position))
                     {
                         SetDestination(hit.position);
-                        Debug.Log($"Chasing pellet at {hit.position}");
+                        //Debug.Log($"Chasing pellet at {hit.position}");
                         StartCoroutine(DestroyPelletAt(hit.position));
                         return Node.NodeState.Success;
                     }
@@ -307,7 +307,7 @@ public class PacManController : MonoBehaviour
         foreach (var pellet in hitPellets)
         {
             Destroy(pellet.gameObject);
-            Debug.Log($"Pellet at {position} eaten.");
+            //Debug.Log($"Pellet at {position} eaten.");
         }
 
         behaviorTree.Tick();
@@ -323,7 +323,7 @@ public class PacManController : MonoBehaviour
             if (IsWithinMapBounds(hit.position))
             {
                 SetDestination(hit.position);
-                Debug.Log($"Wandering to {hit.position}");
+                //Debug.Log($"Wandering to {hit.position}");
                 return Node.NodeState.Success;
             }
         }
@@ -403,7 +403,7 @@ public class PacManController : MonoBehaviour
         else
         {
             Debug.Log("PacMan has no lives left. Game Over!");
-            SceneManager.LoadScene("GameOver");
+            SceneManager.LoadScene("Win");
         }
     }
 

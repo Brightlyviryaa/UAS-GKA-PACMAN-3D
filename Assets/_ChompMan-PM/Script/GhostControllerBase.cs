@@ -267,7 +267,7 @@ public class GhostControllerBase : MonoBehaviour
             if (IsWithinMapBounds(hit.position))
             {
                 agent.SetDestination(hit.position);
-                Debug.Log($"Ghost {gameObject.name} fleeing to {hit.position}");
+                //Debug.Log($"Ghost {gameObject.name} fleeing to {hit.position}");
                 return Node.NodeState.Success;
             }
         }
@@ -276,7 +276,7 @@ public class GhostControllerBase : MonoBehaviour
         if (TryAlternateDirections(wanderRadius, out Vector3 alternatePos, angleIncrement: 30f, maxAttempts: 12))
         {
             agent.SetDestination(alternatePos);
-            Debug.Log($"Ghost {gameObject.name} fleeing to alternate {alternatePos}");
+            //Debug.Log($"Ghost {gameObject.name} fleeing to alternate {alternatePos}");
             return Node.NodeState.Success;
         }
 
@@ -297,7 +297,7 @@ public class GhostControllerBase : MonoBehaviour
             {
                 currentWanderTarget = hit.position;
                 agent.SetDestination(currentWanderTarget);
-                Debug.Log($"Ghost {gameObject.name} wandering to {hit.position}");
+                //Debug.Log($"Ghost {gameObject.name} wandering to {hit.position}");
             }
         }
 

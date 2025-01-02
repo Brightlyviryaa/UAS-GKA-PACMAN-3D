@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class TEST2_MazeGenerator : MonoBehaviour
 {
@@ -10,9 +11,9 @@ public class TEST2_MazeGenerator : MonoBehaviour
     private int mazeWidth = 20;           // Width of the maze (number of blocks)
     private int mazeDepth = 20;           // Depth of the maze (number of blocks)
     private Vector2Int spawnPointSize = new Vector2Int(4, 2);  // The size of the ghost spawn point (3x3 area, for example)
-    private int pelletCount = 5;         // Number of regular pellets to spawn
+    private int pelletCount = 50;         // Number of regular pellets to spawn
     private int powerPelletCount = 5;    // Number of power pellets to spawn
-    private List<Vector3> usedPositions = new List<Vector3>();  // List to track used positions
+    private List<Vector3> usedPositions = new List<Vector3>();  // List to track used position
 
     private void Awake()
     {
@@ -172,9 +173,9 @@ public class TEST2_MazeGenerator : MonoBehaviour
         {
             Vector3 spawnPosition = GetRandomEmptyPosition();
             Instantiate(powerPelletPrefab, spawnPosition, Quaternion.identity);
+            usedPositions.Add(spawnPosition);
         }
     }
-
     Vector3 GetRandomEmptyPosition()
     {
         Vector3 randomPosition;
@@ -186,5 +187,24 @@ public class TEST2_MazeGenerator : MonoBehaviour
         } while (usedPositions.Contains(randomPosition));  // Ensure the position is not "used"
 
         return randomPosition;
+    }
+
+    void Update()
+    {
+        CheckForRemainingPellets();
+    }
+
+    void CheckForRemainingPellets()
+    {
+        // Find all active regular pellets and power pellets in the scene
+        GameObject[] regularPellets = GameObject.FindGameObjectsWithTag("Pellets");
+        GameObject[] powerPellets = GameObject.FindGameObjectsWithTag("PowerPellet");
+
+        // If no regular pellets or power pellets exist, game over
+        if (regularPellets.Length == 0 && powerPellets.Length == 0)
+        {
+            // Transition to the GameOver scene
+            SceneManager.LoadScene("GameOver");
+        }
     }
 }
