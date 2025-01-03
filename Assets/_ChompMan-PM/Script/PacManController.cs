@@ -34,11 +34,14 @@ public class PacManController : MonoBehaviour
     public bool isPoweredUp = false;
     private Coroutine powerRoutine;
 
+    private Animator animator;
+
     [SerializeField]
     public Transform spawnPoint;
 
     void Start()
     {
+        animator = GetComponent<Animator>();
         agent = GetComponent<NavMeshAgent>();
         InitializeBehaviorTree();
         behaviorTree.Tick();
@@ -388,23 +391,43 @@ public class PacManController : MonoBehaviour
         if (lives > 0)
         {
             Debug.Log($"PacMan lost a life! Lives remaining: {lives}");
-            Debug.Log($"Respawning at {spawnPoint.position}");
-            transform.position = spawnPoint.position;
-            Debug.Log($"Current position: {transform.position}");
-            if (agent != null)
-            {
-                agent.ResetPath();
-                agent.Warp(spawnPoint.position); // Move agent directly to spawn point
-            }
-            hasTarget = false;
-            isInEmergency = false;
-            behaviorTree.Tick();
         }
         else
         {
             Debug.Log("PacMan has no lives left. Game Over!");
             SceneManager.LoadScene("Win");
         }
+    }
+
+    public void PacManRespawn()
+    {
+        transform.position = spawnPoint.position;Vector3 respawnCoordinates = new Vector3(9.5f, 0f, 8f);  // Replace with your desired x, y, z values
+        // Optional: If you want to ensure the position is on the NavMesh
+        Vector3 validSpawnPoint;
+        if (NavMesh.SamplePosition(respawnCoordinates, out NavMeshHit hit, 1.0f, NavMesh.AllAreas))
+        {
+            validSpawnPoint = hit.position; // Adjust to the nearest valid position on the NavMesh
+        }
+        else
+        {
+            Debug.LogError("Spawn point is not on the NavMesh!");
+            return;
+        }
+
+        // Move Pac-Man to the spawn point
+        transform.position = validSpawnPoint;
+        Debug.Log($"PacMan respawned at {validSpawnPoint}");
+
+        if (agent != null)
+        {
+            agent.Warp(validSpawnPoint); // Move agent directly to spawn point
+            agent.isStopped = false;    // Ensure agent is not stopped
+            agent.SetDestination(agent.transform.position); // Force agent to resume pathfinding
+        }
+
+        hasTarget = false;
+        isInEmergency = false;
+        behaviorTree.Tick();
     }
 
     private void OnTriggerEnter(Collider other)
@@ -423,6 +446,42 @@ public class PacManController : MonoBehaviour
                 // Jika tidak powered-up, PacMan kehilangan nyawa
                 LoseLife();
             }
+        }
+    }
+
+    public void TriggerDyingAnimation()
+    {
+        if (animator != null)
+        {
+            UpdateCameraTargetToPacman();
+            animator.updateMode = AnimatorUpdateMode.UnscaledTime;
+            animator.SetBool("isDying", true);
+            Debug.Log("isDying parameter set to true.");
+        }
+        else
+        {
+            Debug.LogError("Animator is not assigned!");
+        }
+    }
+
+    public void FreezeGame()
+    {
+        Time.timeScale = 0f; // Freeze the game
+        Debug.Log("Game is now frozen.");
+    }
+
+    public void UnfreezeGame()
+    {
+        Time.timeScale = 1f; // Unfreeze the game
+        Debug.Log("Game is now unfrozen.");
+    }
+
+    private void UpdateCameraTargetToPacman()
+    {
+        CameraFollow cameraFollow = Camera.main.GetComponent<CameraFollow>();
+        if (cameraFollow != null)
+        {
+            cameraFollow.target = GameObject.FindGameObjectWithTag("PacMan").transform; // Set the camera target to PacMan
         }
     }
 

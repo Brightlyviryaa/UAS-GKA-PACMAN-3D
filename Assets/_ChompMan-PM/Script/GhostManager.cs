@@ -1,9 +1,19 @@
 using UnityEngine;
+using UnityEngine.AI; // Required for NavMeshAgent
 
 public class GhostManager : MonoBehaviour
 {
     public GameObject[] ghosts; // Array to hold references to the ghost GameObjects
     private int currentGhostIndex = 0; // Index of the currently controlled ghost
+
+    // Define the spawn points for each ghost
+    private Vector3[] ghostSpawnPoints = new Vector3[]
+    {
+        new Vector3(8.42f, 0f, 9.62f),  // Blue ghost
+        new Vector3(9.16f, 0f, 9.62f),  // Orange ghost
+        new Vector3(9.92f, 0f, 9.62f),  // Pink ghost
+        new Vector3(10.66f, 0f, 9.62f)  // Red ghost
+    };
 
     void Start()
     {
@@ -66,12 +76,33 @@ public class GhostManager : MonoBehaviour
         UpdateCameraTarget();
     }
 
-    private void UpdateCameraTarget()
+    public void UpdateCameraTarget()
     {
         CameraFollow cameraFollow = Camera.main.GetComponent<CameraFollow>();
         if (cameraFollow != null)
         {
             cameraFollow.target = ghosts[currentGhostIndex].transform; // Set the camera target to the currently controlled ghost
+        }
+    }
+
+    // New Method: Reset all ghosts to their spawn points
+    public void RespawnAllGhosts()
+    {
+        for (int i = 0; i < ghosts.Length; i++)
+        {
+            if (ghosts[i] != null)
+            {
+                ghosts[i].transform.position = ghostSpawnPoints[i];
+                Debug.Log($"Ghost {i} respawned at {ghostSpawnPoints[i]}");
+
+                // If using NavMeshAgent
+                NavMeshAgent agent = ghosts[i].GetComponent<NavMeshAgent>();
+                if (agent != null)
+                {
+                    agent.ResetPath();
+                    agent.Warp(ghostSpawnPoints[i]); // Move agent directly to spawn point
+                }
+            }
         }
     }
 }

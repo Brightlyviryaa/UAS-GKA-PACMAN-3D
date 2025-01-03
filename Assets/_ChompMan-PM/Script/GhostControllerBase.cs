@@ -183,6 +183,8 @@ public class GhostControllerBase : MonoBehaviour
                 {
                     // PacMan kehilangan nyawa
                     Debug.Log($"Ghost {gameObject.name} collided with PacMan. PacMan loses a life.");
+                    pacMan.FreezeGame();
+                    pacMan.TriggerDyingAnimation();
                     pacMan.LoseLife();
                 }
             }
