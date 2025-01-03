@@ -34,6 +34,10 @@ public class GhostControllerBase : MonoBehaviour
     public Material scaredMaterial;
     private Renderer ghostRenderer;
 
+    float freezeMovement = 0;
+
+    public bool isDead = false;
+
     protected virtual void Start()
     {
         // Pastikan CapsuleCollider bukan trigger
@@ -130,6 +134,10 @@ public class GhostControllerBase : MonoBehaviour
 
     protected virtual void HandlePlayerControl()
     {
+        if (isDead)
+        {
+            return;
+        }
         // Gunakan ghostSpeed agar kecepatan player controlled ghost sama dengan AI (1.5f)
         float moveSpeed = ghostSpeed;
         float moveHorizontal = Input.GetAxis("Horizontal") * moveSpeed * Time.deltaTime;
@@ -342,26 +350,31 @@ public class GhostControllerBase : MonoBehaviour
 
     IEnumerator EatAndRespawn()
     {
-        // Hentikan agent
+        // Stop agent and make the ghost invisible
+        isDead = true;
         agent.isStopped = true;
+        agent.enabled = false; // Disable the NavMeshAgent to stop movement
+        GetComponent<SkinnedMeshRenderer>().enabled = false; // Disable the mesh
+        GetComponent<CapsuleCollider>().enabled = false;    // Disable the collider
 
-        // Hancurkan ghost
-        gameObject.SetActive(false);
         Debug.Log($"Ghost {gameObject.name} has been eaten and will respawn in {respawnCooldown} seconds.");
-
-        // Tunggu cooldown
         yield return new WaitForSeconds(respawnCooldown);
 
-        // Respawn di GhostSpawnPoint
+        // Respawn the ghost at the spawn point
         transform.position = ghostSpawnPoint.position;
-        gameObject.SetActive(true);
+        GetComponent<SkinnedMeshRenderer>().enabled = true; // Re-enable the mesh
+        GetComponent<CapsuleCollider>().enabled = true;    // Re-enable the collider
+        isDead = false;
+        agent.enabled = true; // Disable the NavMeshAgent to stop movement
         agent.isStopped = false;
+
         Debug.Log($"Ghost {gameObject.name} has respawned at {ghostSpawnPoint.position}.");
 
-        // Restart Behavior Tree jika bukan player controlled
+        // Restart Behavior Tree if not player-controlled
         if (!isPlayerControlled)
         {
             behaviorTree.Tick();
         }
     }
+
 }
