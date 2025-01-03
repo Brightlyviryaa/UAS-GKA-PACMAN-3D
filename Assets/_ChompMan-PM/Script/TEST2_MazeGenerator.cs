@@ -47,6 +47,7 @@ public class TEST2_MazeGenerator : MonoBehaviour
     }
     void Start()
     {
+        Time.timeScale = 1f; // Unfreeze the game
         // Ensure spawnPointSize.x is at least 4
         if (spawnPointSize.x < 4)
         {

@@ -34,8 +34,6 @@ public class GhostControllerBase : MonoBehaviour
     public Material scaredMaterial;
     private Renderer ghostRenderer;
 
-    float freezeMovement = 0;
-
     public bool isDead = false;
 
     protected virtual void Start()
