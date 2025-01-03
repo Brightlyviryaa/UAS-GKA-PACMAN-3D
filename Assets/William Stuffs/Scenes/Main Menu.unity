@@ -1771,7 +1771,7 @@ MonoBehaviour:
     m_FontSize: 14
     m_FontStyle: 0
     m_BestFit: 1
-    m_MinSize: 10
+    m_MinSize: 1
     m_MaxSize: 300
     m_Alignment: 7
     m_AlignByGeometry: 1
@@ -1779,9 +1779,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: 'Reverse
-
-    Pacman 3d'
+  m_Text: Ghost-Man 3D
 --- !u!222 &1426921872
 CanvasRenderer:
   m_ObjectHideFlags: 0
