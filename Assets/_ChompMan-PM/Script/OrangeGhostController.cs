@@ -12,7 +12,7 @@ public class OrangeGhostController : GhostControllerBase
     private bool isDecoyActive = false;
     private bool isCooldownActive = false;
 
-    void Update()
+    protected override void Update()
     {
         base.Update();
 

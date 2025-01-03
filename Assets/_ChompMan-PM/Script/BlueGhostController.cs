@@ -12,7 +12,7 @@ public class BlueGhostController : GhostControllerBase
     private Color originalColor; // Store original color
     private Material ghostMaterial; // Material to modify opacity
 
-    void Start()
+    protected override void Start()
     {
         base.Start();
         base.isPlayerControlled = true;
@@ -21,7 +21,7 @@ public class BlueGhostController : GhostControllerBase
         originalColor = ghostMaterial.color; // Store the original color
     }
 
-    void Update()
+    protected override void Update()
     {
         base.Update();
 

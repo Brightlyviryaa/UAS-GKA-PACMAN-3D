@@ -17,7 +17,7 @@ public class RedGhostController : GhostControllerBase
     private Material ghostMaterial; // Material to modify color intensity
     private Color originalColor; // Store original color
 
-    void Start()
+    protected override void Start()
     {
         base.Start();
         ghostRenderer = GetComponent<Renderer>(); // Access the Renderer component
@@ -25,7 +25,7 @@ public class RedGhostController : GhostControllerBase
         originalColor = ghostMaterial.color; // Store the original color
     }
 
-    void Update()
+    protected override void Update()
     {
         base.Update();
 

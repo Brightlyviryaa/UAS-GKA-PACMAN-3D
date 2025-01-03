@@ -22,7 +22,7 @@ public class PinkGhostController : GhostControllerBase
     private Color originalColor; // Store original color
     private Material ghostMaterial; // Material to modify opacity
 
-    void Start()
+    protected override void Start()
     {
         base.Start();
         ghostRenderer = GetComponent<Renderer>(); // Access the Renderer component
@@ -30,7 +30,7 @@ public class PinkGhostController : GhostControllerBase
         originalColor = ghostMaterial.color; // Store the original color
     }
 
-    void Update()
+    protected override void Update()
     {
         base.Update();
 
