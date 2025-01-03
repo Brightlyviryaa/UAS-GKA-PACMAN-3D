@@ -1779,7 +1779,9 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: chomp-man
+  m_Text: 'Reverse
+
+    Pacman 3d'
 --- !u!222 &1426921872
 CanvasRenderer:
   m_ObjectHideFlags: 0
