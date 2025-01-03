@@ -41,10 +41,14 @@ public class OrangeGhostController : GhostControllerBase
 
         // Add GhostControllerBase component to the decoy to inherit its behavior
         GhostControllerBase decoyController = decoy.GetComponent<GhostControllerBase>();
+        
         if (decoyController == null)
         {
             decoyController = decoy.AddComponent<GhostControllerBase>();
         }
+
+        // Assign the scared material from this ghost to the decoy
+        decoyController.scaredMaterial = this.scaredMaterial; // Copy the scared material
     
         // Adjust NavMeshAgent properties
         NavMeshAgent decoyAgent = decoy.GetComponent<NavMeshAgent>();
